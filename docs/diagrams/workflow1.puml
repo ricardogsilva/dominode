@@ -1,0 +1,158 @@
+@startuml
+title
+    = DomiNode workflow activity diagram
+
+
+end title
+legend top
+    == General user roles and their permissions for each department
+
+    In order to simplify access roles, we assume that:
+
+    * Dataset, style and metadata custodians for a single dataset will all belong to the same department
+    * custodians share the same level of permissions wrt being able
+
+    * **DEPARTMENT_EDITOR** - Designated users from the department.
+    ** Has **read and write permissions** for all datasets in:
+    *** Own department's staging areas (PostGIS DB schema and cloud storage)
+    *** Own department's production areas (PostGIS DB schema and cloud storage)
+    *** Own department's layers present on GeoServer
+    *** Own department's datasets present on GeoNode
+    ** Has **read-only** permissions for all other datasets in:
+    *** Other departments' production areas (PostGIS DB schema and cloud storage)
+    *** Other departments' layers present on GeoServer
+    *** Other departments' layers present on GeoNode
+    ** Is allowed to assign this role to other users
+    ** Is allowed to mark datasets as being PRIVILEGED i.e. require proper authorization in order to be accessed by non-department users
+    ** Dataset, style and metadata custodians must be assigned this role
+
+    * **DEPARTMENT_MEMBER** - Designated users from the department.
+    ** Has **read-only** permissions for all datasets in:
+    *** Own department's staging areas (PostGIS DB schema and cloud storage)
+    *** Own department's production areas (PostGIS DB schema and cloud storage)
+    *** Own department's layers present on GeoServer
+    *** Own department's datasets present on GeoNode
+    *** Other departments' production areas (PostGIS DB schema and cloud storage)
+    *** Other departments' layers present on GeoServer
+    *** Other departments' layers present on GeoNode
+    ** Other department staff should be assigned this role.
+
+    * **EXTERNAL_PRIVILEGED** - Designated external users (perhaps from the Dominican government, or other), not involved with DomiNode
+    ** Has **read-only** permissions for all datasets in:
+    *** All departments' production areas (PostGIS DB schema and cloud storage)
+    *** All departments' layers present on GeoServer
+    *** All departments' layers present on GeoNode
+
+    * **EXTERNAL_AUTHORIZED** - Designated external users that were granted (perhaps just temporarily) **read only** access to:
+    ** A specific dataset's table on its PostGIS production schema
+    ** A specific dataset's WMS service on GeoServer
+    ** A specific dataset's WFS or WCS service on GeoServer
+    ** A specific dataset's CSW GetRecordById on pycsw (might not be supported as-is)
+
+    * **GENERAL_PUBLIC** - Unauthenticated users. These have **read only** access
+
+    == General software application notes
+
+    * GeoServer does not know about the staging areas - This means it is not possible to publish datasets that are in staging
+endlegend
+|General public|
+|Metadata custodian|
+|Dataset custodian|
+start
+:A0 - Acquire dataset;
+if (Dataset is vector?) then (Yes)
+    :A1.1 - Upload dataset to
+    PostGIS staging schema;
+else (No)
+    :A1.2 - Upload dataset to
+    staging filesystem;
+endif
+repeat :A2 - Prepare dataset for publication;
+    :A3 - Validate dataset;
+repeat while (Dataset valid?) is (No)
+-> Yes;
+if (Dataset is vector?) then (Yes)
+    :A4.1 - Move dataset to
+    production schema
+    with access exclusive to
+    INTERNAL_GROUP;
+else (No)
+    :A4.2 - Move dataset to
+    production filesystem
+    with access exclusive to
+    INTERNAL_GROUP;
+endif
+fork
+    :A5 - Publish dataset to
+    INTERNAL_GROUP via GeoServer;
+    :A6 - Publish dataset to
+    INTERNAL_GROUP via GeoNode;
+    |Metadata custodian|
+    repeat :A7 - Create/tweak metadata with GeoNode;
+        :A7 - Validate metadata;
+    repeat while (Metadata valid?) is (No)
+    -> Yes;
+fork again
+    |Style custodian|
+    repeat :A6 - Create/tweak QGIS style;
+        :A7 - Validate QGIS style;
+    repeat while (QGIS style valid?) is (No)
+    -> Yes;
+    if (Dataset is vector?) then (Yes)
+       : A8.1 - Save QGIS style in PostGIS DB;
+    else (No)
+       : A8.2 - Save QGIS style in filesystem;
+    endif
+    |Dataset custodian|
+end fork
+fork
+    :A9 - Publish dataset
+    to PRIVILEGED_GROUP via PostGIS;
+fork again
+    |Style custodian|
+    repeat :A10 - Create SLD style;
+        :A11 - Validate SLD style;
+    repeat while (SLD style valid?) is (No)
+    -> Yes;
+    : A12 - Save SLD style in GeoServer DB;
+    |Dataset custodian|
+end fork
+:A15 - Publish dataset via GeoNode to PRIVILEGED_GROUP;
+if (Data policy allows free access?) then (Yes)
+    :A16 - Publish dataset via GeoServer to WORLD;
+    :A16 - Publish dataset via GeoNode to WORLD;
+    |General public|
+    fork
+        :Use GeoNode and gather information
+        on dataset and its metadata;
+    fork again
+        :Make WMS, WFS WCS requests to
+        GeoServer in order to access dataset
+        inside their apps (e.g. QGIS);
+    fork again
+        :Make CSW requests to pycsw in order
+        to access dataset's metadata
+        inside their apps (e.g. QGIS);
+    end fork
+    |Dataset custodian|
+else (No)
+    :Publish dataset via GeoServer to PAYING_CUSTOMERS;
+    :Publish dataset via GeoNode to PAYING_CUSTOMERS;
+    |PAYING_CUSTOMERS|
+    fork
+        :Use GeoNode with an authenticated user and
+        gather information on dataset and
+        their metadata;
+    fork again
+        :Make authenticated WMS, WFS WCS requests to
+        GeoServer in order to access dataset
+        inside their apps (e.g. QGIS);
+    fork again
+        :Make authenticated CSW requests to pycsw in order
+        to access metadata data
+        inside their apps (e.g. QGIS);
+    end fork
+    |Dataset custodian|
+endif
+end
+@enduml
