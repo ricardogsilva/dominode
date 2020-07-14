@@ -7,6 +7,7 @@ import docker
 import pytest
 import sqlalchemy as sla
 from minio import Minio
+from minio.error import ResponseError
 from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
@@ -119,7 +120,7 @@ def minio_server_info():
     return {
         'name': 'minio-server-pytest',
         'host': 'localhost',
-        'port': '9100',
+        'port': 9100,
         'access_key': 'myuser',
         'secret_key': 'mypassword',
     }
@@ -129,12 +130,12 @@ def minio_server_info():
 def minio_server(docker_client, minio_server_info):
     container = docker_client.containers.run(
         'minio/minio',
+        command='server /data',
         detach=True,
         name=minio_server_info['name'],
         remove=True,
-        network='host',
         ports={
-            '9000': minio_server_info['port']
+            9000: minio_server_info['port']
         },
         environment={
             'MINIO_ACCESS_KEY': minio_server_info['access_key'],
@@ -149,11 +150,10 @@ def minio_server(docker_client, minio_server_info):
 
 @pytest.fixture(scope='session')
 def minio_client(minio_server, minio_server_info):
-    connected = False
-    max_tries = 30
-    current_try = 0
+    max_tries = 10
     sleep_for = 2  # seconds
-    while not connected and current_try < max_tries:
+
+    for current_try in range(1, max_tries + 1):
         try:
             client = Minio(
                 f'{minio_server_info["host"]}:{minio_server_info["port"]}',
@@ -161,12 +161,18 @@ def minio_client(minio_server, minio_server_info):
                 secret_key=minio_server_info['secret_key'],
                 secure=False
             )
+            # perform some command to see if we can connect
+            client.bucket_exists('some-random-bucket')
             break
+        except ResponseError:
+            pass  # don't care if bucket exists, only if client can connect
         except MaxRetryError:
-            print(f'Could not connect to minIO server ({current_try + 1}/{max_tries})')
-            current_try += 1
+            print(
+                f'Could not connect to minIO server '
+                f'({current_try}/{max_tries})'
+            )
             if current_try < max_tries:
                 sleep(sleep_for)
-            else:
-                raise
+    else:
+        raise RuntimeError(f'Gave up on minIO server')
     return client
