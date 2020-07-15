@@ -1,4 +1,5 @@
 import logging
+import urllib3
 from pathlib import Path
 from time import sleep
 from urllib3.exceptions import MaxRetryError
@@ -118,9 +119,7 @@ def db_users(bootstrapped_db_connection, db_users_credentials):
 @pytest.fixture(scope='session')
 def minio_server_info():
     return {
-        'name': 'minio-server-pytest',
-        'host': 'localhost',
-        'port': 9100,
+        'port': 9200,
         'access_key': 'myuser',
         'secret_key': 'mypassword',
     }
@@ -130,10 +129,10 @@ def minio_server_info():
 def minio_server(docker_client, minio_server_info):
     container = docker_client.containers.run(
         'minio/minio',
-        command='server /data',
         detach=True,
-        name=minio_server_info['name'],
-        remove=True,
+        command='server /data',
+        name='minio-server-pytest',
+        auto_remove=True,
         ports={
             9000: minio_server_info['port']
         },
@@ -141,7 +140,6 @@ def minio_server(docker_client, minio_server_info):
             'MINIO_ACCESS_KEY': minio_server_info['access_key'],
             'MINIO_SECRET_KEY': minio_server_info['secret_key'],
         }
-
     )
     yield container
     logger.info(f'Removing container...')
@@ -154,18 +152,30 @@ def minio_client(minio_server, minio_server_info):
     sleep_for = 2  # seconds
 
     for current_try in range(1, max_tries + 1):
+        print(f'current_try: {current_try}')
         try:
+            endpoint = f'localhost:{minio_server_info["port"]}'
+            print(f'endpoint: {endpoint}')
+            print(f'access_key: {minio_server_info["access_key"]}')
+            print(f'secret_key: {minio_server_info["secret_key"]}')
             client = Minio(
-                f'{minio_server_info["host"]}:{minio_server_info["port"]}',
+                endpoint=endpoint,
                 access_key=minio_server_info['access_key'],
                 secret_key=minio_server_info['secret_key'],
-                secure=False
+                secure=False,
+                # customizing http_client because we don't want the default
+                # timeout configuration applied
+                http_client=urllib3.PoolManager(
+                    timeout=urllib3.Timeout.DEFAULT_TIMEOUT,
+                    maxsize=10,
+                    retries=None
+                )
             )
+            print(f'client: {client}')
             # perform some command to see if we can connect
-            client.bucket_exists('some-random-bucket')
+            result = client.list_buckets()
+            print(f'result: {result}')
             break
-        except ResponseError:
-            pass  # don't care if bucket exists, only if client can connect
         except MaxRetryError:
             print(
                 f'Could not connect to minIO server '
@@ -173,6 +183,8 @@ def minio_client(minio_server, minio_server_info):
             )
             if current_try < max_tries:
                 sleep(sleep_for)
+        except Exception:
+            raise
     else:
         raise RuntimeError(f'Gave up on minIO server')
     return client
