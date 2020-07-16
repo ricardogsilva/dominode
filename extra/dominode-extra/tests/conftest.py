@@ -1,4 +1,7 @@
+import json
 import logging
+import shlex
+import subprocess
 import urllib3
 from pathlib import Path
 from time import sleep
@@ -8,7 +11,6 @@ import docker
 import pytest
 import sqlalchemy as sla
 from minio import Minio
-from minio.error import ResponseError
 from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
@@ -188,3 +190,38 @@ def minio_client(minio_server, minio_server_info):
     else:
         raise RuntimeError(f'Gave up on minIO server')
     return client
+
+
+@pytest.fixture(scope='session')
+def bootstrapped_minio_server(
+        minio_server,
+        minio_server_info,
+        minio_client,  # here just to make sure server is already usable
+        tmpdir_factory
+):
+    temp_dir = tmpdir_factory.mktemp('minio_client')
+    config_path = temp_dir.join('config.json')
+    server_alias = 'dominode-pytest'
+    config_path.write_text(
+        json.dumps({
+            'version': '9',
+            'hosts': {
+                server_alias: {
+                    'url': f'http://localhost:{minio_server_info["port"]}',
+                    'access_key': minio_server_info['access_key'],
+                    'secret_key': minio_server_info['secret_key'],
+                    'api': 's3v4',
+                    'lookup': 'auto',
+                }
+            }
+        }),
+        'utf-8'
+    )
+    completed_process = subprocess.run(
+        shlex.split(
+            f'minioadmin bootstrap-server {server_alias} '
+            f'--minio-client-config-dir={temp_dir}'
+        ),
+        capture_output=True
+    )
+    completed_process.check_returncode()

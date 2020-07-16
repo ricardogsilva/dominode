@@ -203,6 +203,13 @@ def add_department(
     )
     create_group(
         endpoint_alias, department.editors_group, minio_client_config_dir)
+    staging_bucket_creation_result = execute_command(
+        endpoint_alias,
+        'mb',
+        department.staging_bucket,
+        minio_client_config_dir=minio_client_config_dir
+    )
+
 
 
 @app.command()
@@ -256,16 +263,13 @@ def set_policy(
 
 
 @app.command()
-def bootstrap_minio_server(
+def bootstrap_server(
         endpoint_alias: str,
         minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ):
-    parent_groups = [
-        'dominode_user',
-        'editor',
-    ]
-    for department in DepartmentName:
-        add_department(endpoint_alias, department, minio_client_config_dir)
+    # groups cannot be nested
+    for member in DepartmentName:
+        add_department(endpoint_alias, member, minio_client_config_dir)
 
 
 def create_group(
@@ -399,6 +403,31 @@ def get_client(
         secret_key=secret_key,
         secure=secure
     )
+
+
+def execute_command(
+        endpoint_alias: str,
+        command: str,
+        arguments: typing.Optional[str] = None,
+        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+):
+    full_command = (
+        f'mc {command} {"/".join((endpoint_alias, arguments or ""))} '
+        f'--json '
+        f'--config-dir {minio_client_config_dir}'
+    )
+    parsed_command = shlex.split(full_command)
+    completed = subprocess.run(
+        parsed_command,
+        capture_output=True
+    )
+    try:
+        completed.check_returncode()
+    except subprocess.CalledProcessError:
+        typer.echo(completed.stdout)
+        raise
+    result = [json.loads(line) for line in completed.stdout.splitlines()]
+    return result
 
 
 def execute_admin_command(
