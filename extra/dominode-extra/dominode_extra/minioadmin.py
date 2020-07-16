@@ -45,11 +45,11 @@ class DomiNodeDepartment:
 
     @property
     def staging_bucket(self) -> str:
-        return f'{self.name}_staging'
+        return f'{self.name}-staging'
 
     @property
     def production_bucket(self) -> str:
-        return f'{self.name}_public'
+        return f'{self.name}-public'
 
     @property
     def regular_users_group(self) -> str:
@@ -193,10 +193,14 @@ def add_department(
         endpoint_alias,
         f'{department.name}_staging_bucket_policy',
         department.dominode_staging_bucket_policy,
+        minio_client_config_dir
+    )
+    set_policy(
+        endpoint_alias,
+        f'{department.name}_staging_bucket_policy',
         department.regular_users_group,
         minio_client_config_dir
     )
-    # set_policy()
     create_group(
         endpoint_alias, department.editors_group, minio_client_config_dir)
 
@@ -217,9 +221,9 @@ def add_policy(
         endpoint_alias: str,
         name: str,
         policy: typing.Dict,
-        group: str,
         minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ):
+    """Add policy to the server"""
     existing_policies = execute_admin_command(endpoint_alias, 'policy list')
     for item in existing_policies:
         if item.get('policy') == name:
@@ -235,6 +239,20 @@ def add_policy(
             minio_client_config_dir=minio_client_config_dir
         )
         Path(pathname).unlink(missing_ok=True)
+
+
+def set_policy(
+        endpoint_alias: str,
+        policy: str,
+        group: str,
+        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+):
+    command_result = execute_admin_command(
+        endpoint_alias,
+        'policy set',
+        f'{policy} group={group}',
+        minio_client_config_dir=minio_client_config_dir
+    )
 
 
 @app.command()

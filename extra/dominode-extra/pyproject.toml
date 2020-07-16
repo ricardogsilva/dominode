@@ -20,3 +20,6 @@ minio = "^5.0.10"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.poetry.scripts]
+minioadmin = 'dominode_extra.minioadmin:app'
