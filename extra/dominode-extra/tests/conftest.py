@@ -193,10 +193,25 @@ def minio_client(minio_server, minio_server_info):
 
 
 @pytest.fixture(scope='session')
+def minio_users_credentials():
+    return {
+        'ppd_editor1': ('ppd_editor1', 'ppd', 'editor'),
+        'ppd_editor2': ('ppd_editor2', 'ppd', 'editor'),
+        'ppd_user1': ('ppd_user1', 'ppd', 'regular_department_user'),
+        'ppd_user2': ('ppd_user2', 'ppd', 'regular_department_user'),
+        'lsd_editor1': ('lsd_editor1', 'lsd', 'editor'),
+        'lsd_editor2': ('lsd_editor2', 'lsd', 'editor'),
+        'lsd_user1': ('lsd_user1', 'lsd', 'regular_department_user'),
+        'lsd_user2': ('lsd_user2', 'lsd', 'regular_department_user'),
+    }
+
+
+@pytest.fixture(scope='session')
 def bootstrapped_minio_server(
         minio_server,
         minio_server_info,
         minio_client,  # here just to make sure server is already usable
+        minio_users_credentials,
         tmpdir_factory
 ):
     temp_dir = tmpdir_factory.mktemp('minio_client')
@@ -217,6 +232,8 @@ def bootstrapped_minio_server(
         }),
         'utf-8'
     )
+    print(f'temp_dir: {temp_dir}')
+    print(f'config.json: {(Path(temp_dir) / "config.json").read_text()}')
     completed_process = subprocess.run(
         shlex.split(
             f'minioadmin bootstrap-server {server_alias} '
@@ -224,4 +241,21 @@ def bootstrapped_minio_server(
         ),
         capture_output=True
     )
-    completed_process.check_returncode()
+    try:
+        completed_process.check_returncode()
+    except subprocess.CalledProcessError:
+        print(f'stdout: {completed_process.stdout}')
+        print(f'stderr: {completed_process.stderr}')
+        raise
+
+    for access_key, user_info in minio_users_credentials.items():
+        secret_key, department_name, role = user_info
+        completed_process = subprocess.run(
+            shlex.split(
+                f'minioadmin add-department-user {server_alias} {access_key} '
+                f'{secret_key} {department_name} {role}'
+                f'--minio-client-config-dir={temp_dir}'
+            ),
+            capture_output=True
+        )
+        completed_process.check_returncode()

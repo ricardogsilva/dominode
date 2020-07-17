@@ -36,135 +36,247 @@ class DepartmentName(Enum):
     LSD = 'lsd'
 
 
+class UserRole(str, Enum):
+    REGULAR_DEPARTMENT_USER = 'regular_department_user'
+    EDITOR = 'editor'
+
+
 class DomiNodeDepartment:
     name: str
+    endpoint_alias: str
+    minio_client_config_dir: Path = DEFAULT_CONFIG_DIR
     _policy_version: str = '2012-10-17'
 
-    def __init__(self, name: DepartmentName):
+    def __init__(
+            self,
+            name: DepartmentName,
+            endpoint_alias: str,
+            minio_client_config_dir: typing.Optional[Path] = None
+    ):
         self.name = name.value
+        self.endpoint_alias = endpoint_alias
+        if minio_client_config_dir is not None:
+            self.minio_client_config_dir = minio_client_config_dir
 
     @property
     def staging_bucket(self) -> str:
         return f'{self.name}-staging'
 
     @property
-    def production_bucket(self) -> str:
-        return f'{self.name}-public'
+    def dominode_staging_root_dir(self) -> str:
+        return f'dominode-staging/{self.name}/'
+
+    @property
+    def production_bucket_root_dir(self) -> str:
+        return f'public/{self.name}/'
 
     @property
     def regular_users_group(self) -> str:
-        return f'{self.name}_user'
+        return f'{self.name}-user'
 
     @property
     def editors_group(self) -> str:
-        return f'{self.name}_editor'
+        return f'{self.name}-editor'
 
     @property
-    def dominode_staging_root_dir(self) -> str:
-        return f'dominode_staging/{self.name}'
+    def regular_users_policy(self) -> typing.Tuple[str, typing.Dict]:
+        return (
+            f'{self.name}_regular_user_policy',
+            {
+                'Version': self._policy_version,
+                'Statement': [
+                    {
+                        'Sid': '',
+                        'Action': [
+                            's3:*'
+                        ],
+                        'Effect': 'Allow',
+                        'Resource': [
+                            f'arn:aws:s3:::{self.staging_bucket}/*',
+                            f'arn:aws:s3:::{self.dominode_staging_root_dir}*'
+                        ]
+                    },
+                    {
+                        'Sid': '',
+                        'Action': [
+                            's3:GetBucketLocation',
+                            's3:GetObject'
+                        ],
+                        'Effect': 'Allow',
+                        'Resource': [
+                            f'arn:aws:s3:::{self.production_bucket_root_dir}*'
+                        ]
+                    }
+                ]
+            }
+        )
 
     @property
-    def staging_bucket_policy(self) -> typing.Dict:
-        return {
-            'Version': self._policy_version,
-            'Statement': [
-                {
-                    'Sid': '',
-                    'Action': [
-                        's3:*'
-                    ],
-                    'Effect': 'Allow',
-                    'Resource': [
-                        f'arn:aws:s3:::{self.staging_bucket}/*'
-                    ]
-                }
-            ]
-        }
+    def editor_users_policy(self) -> typing.Tuple[str, typing.Dict]:
+        return (
+            f'{self.name}_editor_policy',
+            {
+                'Version': self._policy_version,
+                'Statement': [
+                    {
+                        'Sid': '',
+                        'Action': [
+                            's3:*'
+                        ],
+                        'Effect': 'Allow',
+                        'Resource': [
+                            f'arn:aws:s3:::{self.staging_bucket}/*',
+                            f'arn:aws:s3:::{self.dominode_staging_root_dir}*'
+                        ]
+                    },
+                    {
+                        'Sid': '',
+                        'Action': [
+                            's3:GetBucketLocation',
+                            's3:GetObject'
+                        ],
+                        'Effect': 'Allow',
+                        'Resource': [
+                            f'arn:aws:s3:::{self.production_bucket_root_dir}*'
+                        ]
+                    },
+                    {
+                        'Sid': '',
+                        'Action': [
+                            's3:GetBucketLocation',
+                            's3:GetObject',
+                            # TODO: add more actions
+                            # - creating directories
+                            # - copying objects from owned buckets
+                            # - deleting objects objects
+                            # - etc
+                        ],
+                        'Effect': 'Allow',
+                        'Resource': [
+                            f'arn:aws:s3:::{self.dominode_staging_root_dir}/*'
+                        ]
+                    }
+                ]
+            }
+        )
 
-    @property
-    def dominode_staging_bucket_policy(self) -> typing.Dict:
-        return {
-            'Version': self._policy_version,
-            'Statement': [
-                {
-                    'Sid': '',
-                    'Action': [
-                        's3:*'
-                    ],
-                    'Effect': 'Allow',
-                    'Resource': [
-                        f'arn:aws:s3:::{self.dominode_staging_root_dir}/*'
-                    ]
-                }
-            ]
-        }
+    def create_groups(self):
+        create_group(
+            self.endpoint_alias,
+            self.regular_users_group,
+            self.minio_client_config_dir
+        )
+        create_group(
+            self.endpoint_alias,
+            self.editors_group,
+            self.minio_client_config_dir
+        )
 
-    @property
-    def dominode_production_bucket_policy_regular_user(self) -> typing.Dict:
-        return {
-            'Version': self._policy_version,
-            'Statement': [
-                {
-                    'Sid': '',
-                    'Action': [
-                        's3:GetBucketLocation',
-                        's3:GetObject'
-                    ],
-                    'Effect': 'Allow',
-                    'Resource': [
-                        f'arn:aws:s3:::{self.dominode_staging_root_dir}/*'
-                    ]
-                }
-            ]
-        }
+    def create_buckets(self):
+        extra = '--ignore-existing'
+        self._execute_command('mb', f'{self.staging_bucket} {extra}')
+        self._execute_command('mb', f'{self.dominode_staging_root_dir} {extra}')
+        self._execute_command(
+            'mb', f'{self.production_bucket_root_dir} {extra}')
 
-    @property
-    def dominode_production_bucket_policy_editor_user(self) -> typing.Dict:
-        return {
-            'Version': self._policy_version,
-            'Statement': [
-                {
-                    'Sid': '',
-                    'Action': [
-                        's3:GetBucketLocation',
-                        's3:GetObject',
-                        # TODO: add more actions
-                        # - creating directories
-                        # - copying objects from owned buckets
-                        # - deleting objects objects
-                        # - etc
-                    ],
-                    'Effect': 'Allow',
-                    'Resource': [
-                        f'arn:aws:s3:::{self.dominode_staging_root_dir}/*'
-                    ]
-                }
-            ]
-        }
+    def create_policies(self):
+        self.add_policy(*self.regular_users_policy)
+        self.add_policy(*self.editor_users_policy)
+
+    def add_policy(self, name: str, policy: typing.Dict):
+        """Add policy to the server"""
+        existing_policies = self._execute_admin_command('policy list')
+        for item in existing_policies:
+            if item.get('policy') == name:
+                break  # policy already exists
+        else:
+            os_file_handler, pathname = tempfile.mkstemp(text=True)
+            with fdopen(os_file_handler, mode='w') as fh:
+                json.dump(policy, fh)
+            self._execute_admin_command(
+                'policy add',
+                f'{name} {pathname}',
+            )
+            Path(pathname).unlink(missing_ok=True)
+
+    def set_policies(self):
+        self.set_policy(self.regular_users_policy[0], self.regular_users_group)
+        self.set_policy(self.editor_users_policy[0], self.editors_group)
+
+    def set_policy(
+            self,
+            policy: str,
+            group: str,
+    ):
+        self._execute_admin_command(
+            'policy set',
+            f'{policy} group={group}',
+        )
+
+    def add_user(
+            self,
+            access_key: str,
+            secret_key: str,
+            role: typing.Optional[UserRole] = UserRole.REGULAR_DEPARTMENT_USER
+    ):
+        create_user(
+            self.endpoint_alias,
+            access_key,
+            secret_key,
+            minio_client_config_dir=self.minio_client_config_dir
+        )
+        group = {
+            UserRole.REGULAR_DEPARTMENT_USER: self.regular_users_group,
+            UserRole.EDITOR: self.editors_group,
+        }[role]
+        addition_result = self._execute_admin_command(
+            'group add', f'{group} {access_key}',)
+        return addition_result[0].get('status') == SUCCESS
+
+    def _execute_command(
+            self,
+            command: str,
+            arguments: typing.Optional[str] = None,
+    ):
+        return execute_command(
+            self.endpoint_alias,
+            command,
+            arguments,
+            self.minio_client_config_dir
+        )
+
+    def _execute_admin_command(
+            self,
+            command: str,
+            arguments: typing.Optional[str] = None,
+    ):
+        return execute_admin_command(
+            self.endpoint_alias,
+            command,
+            arguments,
+            self.minio_client_config_dir
+        )
 
 
 @app.command()
-def add_user(
+def add_department_user(
         endpoint_alias: str,
-        department_name: DepartmentName,
         access_key: str,
         secret_key: str,
+        department_name: DepartmentName,
+        role: typing.Optional[UserRole] = UserRole.REGULAR_DEPARTMENT_USER,
         minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ):
-    create_user(
-        endpoint_alias,
-        access_key,
-        secret_key,
-        minio_client_config_dir=minio_client_config_dir
-    )
-    department = DomiNodeDepartment(department_name)
-    addition_result = execute_admin_command(
-        endpoint_alias,
-        'group add', f'{department.name} {access_key}',
-        minio_client_config_dir=minio_client_config_dir
-    )
-    return addition_result[0].get('status') == SUCCESS
+    """Create a user and add it to the relevant department groups
 
+    This function shall ensure that when a new user is created it is put in the
+    relevant groups and with the correct access policies
+
+    """
+
+    department = DomiNodeDepartment(
+        department_name, endpoint_alias, minio_client_config_dir)
+    return department.add_user(access_key, secret_key, role)
 
 
 @app.command()
@@ -182,84 +294,12 @@ def add_department(
 
     """
 
-    department = DomiNodeDepartment(name)
-
-    # create groups
-    # assign policies
-    # create buckets/dirs
-    create_group(
-        endpoint_alias, department.regular_users_group, minio_client_config_dir)
-    add_policy(
-        endpoint_alias,
-        f'{department.name}_staging_bucket_policy',
-        department.dominode_staging_bucket_policy,
-        minio_client_config_dir
-    )
-    set_policy(
-        endpoint_alias,
-        f'{department.name}_staging_bucket_policy',
-        department.regular_users_group,
-        minio_client_config_dir
-    )
-    create_group(
-        endpoint_alias, department.editors_group, minio_client_config_dir)
-    staging_bucket_creation_result = execute_command(
-        endpoint_alias,
-        'mb',
-        department.staging_bucket,
-        minio_client_config_dir=minio_client_config_dir
-    )
-
-
-
-@app.command()
-def remove_department(
-        endpoint_alias: str,
-        name: DepartmentName,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
-):
-    department = DomiNodeDepartment(name)
-    remove_group(endpoint_alias, department.editors_group, DEFAULT_CONFIG_DIR)
-    remove_group(
-        endpoint_alias, department.regular_users_group, DEFAULT_CONFIG_DIR)
-
-
-def add_policy(
-        endpoint_alias: str,
-        name: str,
-        policy: typing.Dict,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
-):
-    """Add policy to the server"""
-    existing_policies = execute_admin_command(endpoint_alias, 'policy list')
-    for item in existing_policies:
-        if item.get('policy') == name:
-            break  # policy already exists
-    else:
-        os_file_handler, pathname = tempfile.mkstemp(text=True)
-        with fdopen(os_file_handler, mode='w') as fh:
-            json.dump(policy, fh)
-        creation_result = execute_admin_command(
-            endpoint_alias,
-            'policy add',
-            f'{name} {pathname}',
-            minio_client_config_dir=minio_client_config_dir
-        )
-        Path(pathname).unlink(missing_ok=True)
-
-
-def set_policy(
-        endpoint_alias: str,
-        policy: str,
-        group: str,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
-):
-    command_result = execute_admin_command(
-        endpoint_alias,
-        'policy set',
-        f'{policy} group={group}',
-        minio_client_config_dir=minio_client_config_dir
-    )
+    department = DomiNodeDepartment(
+        name, endpoint_alias, minio_client_config_dir)
+    department.create_groups()
+    department.create_buckets()
+    department.create_policies()
+    department.set_policies()
 
 
 @app.command()
@@ -391,20 +431,6 @@ def create_user(
     return result
 
 
-def get_client(
-        endpoint: str,
-        access_key: str,
-        secret_key: str,
-        secure: bool = False
-) -> Minio:
-    return Minio(
-        endpoint,
-        access_key=access_key,
-        secret_key=secret_key,
-        secure=secure
-    )
-
-
 def execute_command(
         endpoint_alias: str,
         command: str,
@@ -416,6 +442,7 @@ def execute_command(
         f'--json '
         f'--config-dir {minio_client_config_dir}'
     )
+    typer.echo(full_command)
     parsed_command = shlex.split(full_command)
     completed = subprocess.run(
         parsed_command,
@@ -449,6 +476,7 @@ def execute_admin_command(
         completed.check_returncode()
     except subprocess.CalledProcessError:
         typer.echo(completed.stdout)
+        typer.echo(completed.stderr)
         raise
     result = [json.loads(line) for line in completed.stdout.splitlines()]
     return result
