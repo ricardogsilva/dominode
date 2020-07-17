@@ -134,7 +134,7 @@ def minio_server(docker_client, minio_server_info):
         detach=True,
         command='server /data',
         name='minio-server-pytest',
-        auto_remove=True,
+        #auto_remove=True,
         ports={
             9000: minio_server_info['port']
         },
@@ -145,7 +145,7 @@ def minio_server(docker_client, minio_server_info):
     )
     yield container
     logger.info(f'Removing container...')
-    container.stop()
+    #container.stop()
 
 
 @pytest.fixture(scope='session')
@@ -223,9 +223,9 @@ def bootstrapped_minio_server(
             'hosts': {
                 server_alias: {
                     'url': f'http://localhost:{minio_server_info["port"]}',
-                    'access_key': minio_server_info['access_key'],
-                    'secret_key': minio_server_info['secret_key'],
-                    'api': 's3v4',
+                    'accessKey': minio_server_info['access_key'],
+                    'secretKey': minio_server_info['secret_key'],
+                    'api': 'S3v4',
                     'lookup': 'auto',
                 }
             }
@@ -237,7 +237,8 @@ def bootstrapped_minio_server(
     completed_process = subprocess.run(
         shlex.split(
             f'minioadmin bootstrap-server {server_alias} '
-            f'--minio-client-config-dir={temp_dir}'
+            #f'--minio-client-config-dir={temp_dir}'
+            f'--minio-client-config-dir=/tmp/mytest'
         ),
         capture_output=True
     )
