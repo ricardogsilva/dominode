@@ -296,7 +296,7 @@ def add_department(
 
     department = DomiNodeDepartment(
         name, endpoint_alias, minio_client_config_dir)
-    typer.echo(f'department config_dir: {department.minio_client_config_dir}')
+    # typer.echo(f'department config_dir: {department.minio_client_config_dir}')
     department.create_groups()
     department.create_buckets()
     department.create_policies()
@@ -308,8 +308,8 @@ def bootstrap_server(
         endpoint_alias: str,
         minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ):
-    typer.echo(f'locals: {locals()}')
-    typer.echo(f'config.json: {(minio_client_config_dir / "config.json").read_text()}')
+    # typer.echo(f'locals: {locals()}')
+    # typer.echo(f'config.json: {(minio_client_config_dir / "config.json").read_text()}')
     # groups cannot be nested
     for member in DepartmentName:
         add_department(endpoint_alias, member, minio_client_config_dir)
@@ -441,9 +441,8 @@ def execute_command(
         minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ):
     full_command = (
-        f'mc {command} {"/".join((endpoint_alias, arguments or ""))} '
-        f'--json '
-        f'--config-dir {minio_client_config_dir}'
+        f'mc --config-dir {minio_client_config_dir} --json {command} '
+        f'{"/".join((endpoint_alias, arguments or ""))}'
     )
     typer.echo(full_command)
     parsed_command = shlex.split(full_command)
@@ -467,13 +466,16 @@ def execute_admin_command(
         minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ) -> typing.List:
     """Uses the ``mc`` binary to perform admin tasks on minIO servers"""
-    typer.echo(f'inside execute_admin_command')
-    typer.echo(f'endpoint_alias: {endpoint_alias}')
-    typer.echo(f'minio_client_config_dir: {minio_client_config_dir}')
-    typer.echo(f'contents of config.json: {(minio_client_config_dir / "config.json").read_text()}')
+    # typer.echo(f'inside execute_admin_command')
+    # typer.echo(f'endpoint_alias: {endpoint_alias}')
+    # typer.echo(f'minio_client_config_dir: {minio_client_config_dir}')
+    # typer.echo(f'contents of config.json: {(minio_client_config_dir / "config.json").read_text()}')
     full_command = (
-        f'mc admin {command} {endpoint_alias} {arguments or ""} --json')
-    full_command = full_command + f' --config-dir {minio_client_config_dir}'
+        f'mc --config-dir {minio_client_config_dir} --json admin {command} '
+        f'{endpoint_alias} {arguments or ""}'
+    )
+
+
     parsed_command = shlex.split(full_command)
     completed = subprocess.run(
         parsed_command,

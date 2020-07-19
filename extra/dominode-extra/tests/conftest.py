@@ -134,7 +134,7 @@ def minio_server(docker_client, minio_server_info):
         detach=True,
         command='server /data',
         name='minio-server-pytest',
-        #auto_remove=True,
+        auto_remove=True,
         ports={
             9000: minio_server_info['port']
         },
@@ -145,7 +145,7 @@ def minio_server(docker_client, minio_server_info):
     )
     yield container
     logger.info(f'Removing container...')
-    #container.stop()
+    container.stop()
 
 
 @pytest.fixture(scope='session')
@@ -232,13 +232,10 @@ def bootstrapped_minio_server(
         }),
         'utf-8'
     )
-    print(f'temp_dir: {temp_dir}')
-    print(f'config.json: {(Path(temp_dir) / "config.json").read_text()}')
     completed_process = subprocess.run(
         shlex.split(
             f'minioadmin bootstrap-server {server_alias} '
-            #f'--minio-client-config-dir={temp_dir}'
-            f'--minio-client-config-dir=/tmp/mytest'
+            f'--minio-client-config-dir={temp_dir}'
         ),
         capture_output=True
     )
@@ -254,9 +251,14 @@ def bootstrapped_minio_server(
         completed_process = subprocess.run(
             shlex.split(
                 f'minioadmin add-department-user {server_alias} {access_key} '
-                f'{secret_key} {department_name} {role}'
+                f'{secret_key} {department_name} --role={role} '
                 f'--minio-client-config-dir={temp_dir}'
             ),
             capture_output=True
         )
-        completed_process.check_returncode()
+        try:
+            completed_process.check_returncode()
+        except subprocess.CalledProcessError:
+            print(f'stdout: {completed_process.stdout}')
+            print(f'stderr: {completed_process.stderr}')
+            raise
