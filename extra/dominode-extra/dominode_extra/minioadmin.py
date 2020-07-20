@@ -23,7 +23,6 @@ from os import fdopen
 
 import typer
 from enum import Enum
-from minio import Minio
 
 app = typer.Typer()
 
@@ -45,6 +44,8 @@ class DomiNodeDepartment:
     name: str
     endpoint_alias: str
     minio_client_config_dir: Path = DEFAULT_CONFIG_DIR
+    dominode_staging_bucket: str = 'dominode-staging'
+    public_bucket: str = 'public'
     _policy_version: str = '2012-10-17'
 
     def __init__(
@@ -64,11 +65,11 @@ class DomiNodeDepartment:
 
     @property
     def dominode_staging_root_dir(self) -> str:
-        return f'dominode-staging/{self.name}/'
+        return f'{self.dominode_staging_bucket}/{self.name}/'
 
     @property
     def production_bucket_root_dir(self) -> str:
-        return f'public/{self.name}/'
+        return f'{self.public_bucket}/{self.name}/'
 
     @property
     def regular_users_group(self) -> str:
@@ -79,83 +80,71 @@ class DomiNodeDepartment:
         return f'{self.name}-editor'
 
     @property
-    def regular_users_policy(self) -> typing.Tuple[str, typing.Dict]:
+    def regular_user_policy(self) -> typing.Tuple[str, typing.Dict]:
         return (
-            f'{self.name}_regular_user_policy',
+            f'{self.name}-regular-user-group-policy',
             {
                 'Version': self._policy_version,
                 'Statement': [
                     {
-                        'Sid': '',
+                        'Sid': f'{self.name}-regular-user-full-access',
                         'Action': [
                             's3:*'
                         ],
                         'Effect': 'Allow',
                         'Resource': [
+                            f'arn:aws:s3:::{self.dominode_staging_root_dir}*',
                             f'arn:aws:s3:::{self.staging_bucket}/*',
-                            f'arn:aws:s3:::{self.dominode_staging_root_dir}*'
                         ]
                     },
                     {
-                        'Sid': '',
+                        'Sid': f'{self.name}-regular-user-read-only',
                         'Action': [
                             's3:GetBucketLocation',
-                            's3:GetObject'
+                            's3:ListBucket',
+                            's3:GetObject',
                         ],
                         'Effect': 'Allow',
                         'Resource': [
-                            f'arn:aws:s3:::{self.production_bucket_root_dir}*'
+                            f'arn:aws:s3:::{self.dominode_staging_bucket}/*'
                         ]
-                    }
+                    },
                 ]
             }
         )
 
     @property
-    def editor_users_policy(self) -> typing.Tuple[str, typing.Dict]:
+    def editor_user_policy(self) -> typing.Tuple[str, typing.Dict]:
         return (
-            f'{self.name}_editor_policy',
+            f'{self.name}-editor-group-policy',
             {
                 'Version': self._policy_version,
                 'Statement': [
                     {
-                        'Sid': '',
+                        'Sid': f'{self.name}-editor-full-access',
                         'Action': [
                             's3:*'
                         ],
                         'Effect': 'Allow',
                         'Resource': [
                             f'arn:aws:s3:::{self.staging_bucket}/*',
-                            f'arn:aws:s3:::{self.dominode_staging_root_dir}*'
+                            f'arn:aws:s3:::{self.dominode_staging_root_dir}*',
+                            f'arn:aws:s3:::{self.production_bucket_root_dir}*',
                         ]
                     },
                     {
-                        'Sid': '',
+                        'Sid': f'{self.name}-editor-read-only',
                         'Action': [
                             's3:GetBucketLocation',
-                            's3:GetObject'
-                        ],
-                        'Effect': 'Allow',
-                        'Resource': [
-                            f'arn:aws:s3:::{self.production_bucket_root_dir}*'
-                        ]
-                    },
-                    {
-                        'Sid': '',
-                        'Action': [
-                            's3:GetBucketLocation',
+                            's3:ListBucket',
                             's3:GetObject',
-                            # TODO: add more actions
-                            # - creating directories
-                            # - copying objects from owned buckets
-                            # - deleting objects objects
-                            # - etc
                         ],
                         'Effect': 'Allow',
                         'Resource': [
-                            f'arn:aws:s3:::{self.dominode_staging_root_dir}/*'
+                            f'arn:aws:s3:::{self.dominode_staging_bucket}/*',
+                            f'arn:aws:s3:::{self.public_bucket}/*'
                         ]
-                    }
+                    },
                 ]
             }
         )
@@ -180,8 +169,8 @@ class DomiNodeDepartment:
             'mb', f'{self.production_bucket_root_dir} {extra}')
 
     def create_policies(self):
-        self.add_policy(*self.regular_users_policy)
-        self.add_policy(*self.editor_users_policy)
+        self.add_policy(*self.regular_user_policy)
+        self.add_policy(*self.editor_user_policy)
 
     def add_policy(self, name: str, policy: typing.Dict):
         """Add policy to the server"""
@@ -200,8 +189,15 @@ class DomiNodeDepartment:
             Path(pathname).unlink(missing_ok=True)
 
     def set_policies(self):
-        self.set_policy(self.regular_users_policy[0], self.regular_users_group)
-        self.set_policy(self.editor_users_policy[0], self.editors_group)
+        self.set_policy(self.regular_user_policy[0], self.regular_users_group)
+        self.set_policy(self.editor_user_policy[0], self.editors_group)
+        self._set_public_policy()
+
+    def _set_public_policy(self):
+        self._execute_command(
+            'policy set download',
+            f'{self.production_bucket_root_dir}*'
+        )
 
     def set_policy(
             self,

@@ -14,7 +14,8 @@ def test_regular_user_has_access_to_buckets(
         access_key,
         expected_num_buckets
 ):
-    minio_client = _get_minio_client(access_key, minio_users_credentials, minio_server_info['port'])
+    minio_client = _get_minio_client(
+        access_key, minio_users_credentials, minio_server_info['port'])
     buckets = minio_client.list_buckets()
     print(f'buckets: {buckets}')
     assert len(buckets) == expected_num_buckets
