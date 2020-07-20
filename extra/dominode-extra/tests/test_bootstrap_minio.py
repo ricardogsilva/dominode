@@ -5,7 +5,8 @@ from minio import Minio
 
 
 @pytest.mark.parametrize('access_key, expected_num_buckets', [
-    pytest.param('ppd_user1', 2)
+    pytest.param('ppd_user1', 2),
+    pytest.param('ppd_editor1', 3),
 ])
 def test_regular_user_has_access_to_buckets(
         minio_server_info,
