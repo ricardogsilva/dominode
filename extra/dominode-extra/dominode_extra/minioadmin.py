@@ -87,6 +87,17 @@ class DomiNodeDepartment:
                 'Version': self._policy_version,
                 'Statement': [
                     {
+                        'Sid': f'{self.name}-regular-user-deny-bucket-delete',
+                        'Action': [
+                            's3:DeleteBucket',
+                        ],
+                        'Effect': 'Deny',
+                        'Resource': [
+                            f'arn:aws:s3:::{self.dominode_staging_bucket}',
+                            f'arn:aws:s3:::{self.staging_bucket}',
+                        ]
+                    },
+                    {
                         'Sid': f'{self.name}-regular-user-full-access',
                         'Action': [
                             's3:*'
@@ -106,7 +117,8 @@ class DomiNodeDepartment:
                         ],
                         'Effect': 'Allow',
                         'Resource': [
-                            f'arn:aws:s3:::{self.dominode_staging_bucket}/*'
+                            f'arn:aws:s3:::{self.dominode_staging_bucket}/*',
+                            f'arn:aws:s3:::{self.public_bucket}/*'
                         ]
                     },
                 ]
@@ -120,6 +132,17 @@ class DomiNodeDepartment:
             {
                 'Version': self._policy_version,
                 'Statement': [
+                    {
+                        'Sid': f'{self.name}-editor-user-deny-bucket-delete',
+                        'Action': [
+                            's3:DeleteBucket',
+                        ],
+                        'Effect': 'Deny',
+                        'Resource': [
+                            f'arn:aws:s3:::{self.dominode_staging_bucket}',
+                            f'arn:aws:s3:::{self.staging_bucket}',
+                        ]
+                    },
                     {
                         'Sid': f'{self.name}-editor-full-access',
                         'Action': [

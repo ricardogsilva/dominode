@@ -192,6 +192,18 @@ def minio_client(minio_server, minio_server_info):
     return client
 
 
+@pytest.fixture()
+def minio_admin_client(minio_server, minio_server_info):
+    endpoint = f'localhost:{minio_server_info["port"]}'
+    client = Minio(
+        endpoint=endpoint,
+        access_key=minio_server_info['access_key'],
+        secret_key=minio_server_info['secret_key'],
+        secure=False,
+    )
+    return client
+
+
 @pytest.fixture(scope='session')
 def minio_users_credentials():
     return {
