@@ -159,6 +159,116 @@ def test_user_is_able_to_access_file(
     creator_minio_client.remove_object(bucket_name, object_path)
 
 
+@pytest.mark.parametrize('creator, modifier, creation_bucket_path, modified_path', [
+    pytest.param('ppd_user1', 'ppd_user2', 'ppd-staging/file1.txt', 'ppd-staging/extra/file1.txt', id='t87'),
+    pytest.param('ppd_user1', 'ppd_editor1', 'ppd-staging/file1.txt', 'ppd-staging/extra/file1.txt', id='t88'),
+    pytest.param('ppd_user1', 'ppd_user2', 'dominode-staging/ppd/file1.txt', 'dominode-staging/ppd/extra/file1.txt', id='t115'),
+    pytest.param('ppd_user1', 'ppd_editor1', 'dominode-staging/ppd/file1.txt', 'dominode-staging/ppd/extra/file1.txt', id='t116'),
+    pytest.param('ppd_editor1', 'ppd_editor2', 'public/ppd/file1.txt', 'public/ppd/extra/file1.txt', id='t144'),
+])
+def test_user_is_able_to_rename_file_directory(
+        bootstrapped_minio_server,
+        minio_users_credentials: typing.Dict,
+        minio_server_info: typing.Dict,
+        creator: str,
+        modifier: str,
+        creation_bucket_path: str,
+        modified_path: str,
+):
+    """
+    Test is actually seeing if user is able to copy an object
+
+    minIO does not seem to have a `rename` operation - what we are doing
+    is copying the object to the specified location and then deleting the
+    original one.
+
+    """
+
+    creator_minio_client = _get_minio_client(
+        creator, minio_users_credentials, minio_server_info)
+    creation_bucket_name, creation_object_path = creation_bucket_path.partition(
+        '/')[::2]
+    contents = 'hello world'
+    _create_file(
+        creator_minio_client,
+        creation_bucket_name,
+        creation_object_path,
+        contents=contents
+    )
+
+    modifier_minio_client = _get_minio_client(
+        modifier, minio_users_credentials, minio_server_info)
+    modified_bucket_name, modified_object_path = modified_path.partition(
+        '/')[::2]
+    try:
+        modifier_minio_client.copy_object(
+            modified_bucket_name,
+            modified_object_path,
+            creation_bucket_path
+        )
+        modifier_minio_client.remove_object(creation_bucket_name, creation_object_path)
+        modifier_minio_client.remove_object(modified_bucket_name, modified_object_path)
+    except minio.error.ResponseError:
+        creator_minio_client.remove_object(creation_bucket_name, creation_object_path)
+
+
+@pytest.mark.parametrize('creator, modifier, bucket_path', [
+    pytest.param('ppd_user1', 'ppd_user2', 'ppd-staging/file1.txt', id='t95.1'),
+    pytest.param('ppd_editor1', 'ppd_user2', 'ppd-staging/file1.txt', id='t95.2'),
+    pytest.param('ppd_user1', 'ppd_editor1', 'ppd-staging/file1.txt', id='t96.1'),
+    pytest.param('ppd_editor1', 'ppd_editor2', 'ppd-staging/file1.txt', id='t96.1'),
+    pytest.param('ppd_user1', 'ppd_user2', 'dominode-staging/ppd/file1.txt', id='t123.1'),
+    pytest.param('ppd_editor1', 'ppd_user2', 'dominode-staging/ppd/file1.txt', id='t123.2'),
+    pytest.param('ppd_user1', 'ppd_editor1', 'dominode-staging/ppd/file1.txt', id='t124.1'),
+    pytest.param('ppd_editor1', 'ppd_editor2', 'dominode-staging/ppd/file1.txt', id='t124.2'),
+])
+def test_user_is_able_to_edit_file(
+        bootstrapped_minio_server,
+        minio_users_credentials: typing.Dict,
+        minio_server_info: typing.Dict,
+        creator: str,
+        modifier: str,
+        bucket_path: str,
+):
+    """Test checks if user can put object with same name as a previous one.
+
+    minIO does not seem to have a `edit` operation - what we are doing
+    is putting a different file into a previously existing one.
+
+    """
+
+    creator_minio_client = _get_minio_client(
+        creator, minio_users_credentials, minio_server_info)
+    bucket_name, object_path = bucket_path.partition('/')[::2]
+    initial_contents = 'hello world'
+    _create_file(
+        creator_minio_client,
+        bucket_name,
+        object_path,
+        contents=initial_contents
+    )
+    modified_contents = 'This was changed'
+    modifier_minio_client = _get_minio_client(
+        modifier, minio_users_credentials, minio_server_info)
+    try:
+        _create_file(
+            modifier_minio_client,
+            bucket_name,
+            object_path,
+            contents=modified_contents
+        )
+        data: HTTPResponse = modifier_minio_client.get_object(
+            bucket_name, object_path)
+        buffer = io.StringIO()
+        for chunk in data.stream(32 * 1024):
+            buffer.write(chunk.decode('utf-8'))
+        buffer.seek(0)
+        response = buffer.read()
+        assert response == modified_contents
+    finally:
+        creator_minio_client.remove_object(bucket_name, object_path)
+
+
 def _create_file(
         minio_client: minio.Minio,
         bucket_name: str,
@@ -180,6 +290,67 @@ def _create_file(
         buffer,
         buffer_size
     )
+
+
+@pytest.mark.parametrize('access_key, bucket_path', [
+    pytest.param('ppd_user1', 'lsd-staging/file1.txt', id='t105.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_user1', 'lsd-staging/somedir/file2.txt', id='t97, t105.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd-staging/file3.txt', id='t106.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd-staging/somedir/file4.txt', id='t98, t106.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_user1', 'dominode-staging/lsd/file1.txt', id='t133.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_user1', 'dominode-staging/lsd/somedir/file2.txt', id='t125, t133.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'dominode-staging/lsd/file3.txt', id='t134.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'dominode-staging/lsd/somedir/file4.txt', id='t126, t134.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'public/lsd/file3.txt', id='t147.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'public/lsd/somedir/file4.txt', id='t139, t147.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+])
+def test_user_is_not_able_to_put_file_in_bucket_owned_by_another_department(
+        bootstrapped_minio_server,
+        minio_users_credentials: typing.Dict,
+        minio_server_info: typing.Dict,
+        minio_admin_client: minio.Minio,
+        access_key: str,
+        bucket_path: str,
+):
+    minio_client = _get_minio_client(
+        access_key, minio_users_credentials, minio_server_info
+    )
+    bucket_name, object_path = bucket_path.partition('/')[::2]
+    _create_file(minio_client, bucket_name, object_path)
+
+
+@pytest.mark.parametrize('creator, modifier, bucket_path', [
+    pytest.param('ppd_user1', 'lsd_user1', 'ppd-staging/file1.txt', id='t107.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_user1', 'lsd_user1', 'ppd-staging/somedir/file2.txt', id='t99, t107.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'ppd-staging/file3.txt', id='t108.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'ppd-staging/somedir/file4.txt', id='t100, t108.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_user1', 'lsd_user1', 'dominode-staging/ppd/file1.txt', id='t135.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_user1', 'lsd_user1', 'dominode-staging/ppd/somedir/file2.txt', id='t127, t135.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'dominode-staging/ppd/file3.txt', id='t136.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'dominode-staging/ppd/somedir/file4.txt', id='t128, t136.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'public/ppd/file3.txt', id='t149.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'public/ppd/somedir/file4.txt', id='t141, t149.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+])
+def test_user_is_not_able_to_delete_file_from_bucket_owned_by_another_department(
+        bootstrapped_minio_server,
+        minio_users_credentials: typing.Dict,
+        minio_server_info: typing.Dict,
+        creator: str,
+        modifier: str,
+        bucket_path: str
+):
+    creator_minio_client = _get_minio_client(
+        creator, minio_users_credentials, minio_server_info
+    )
+    bucket_name, object_path = bucket_path.partition('/')[::2]
+    _create_file(creator_minio_client, bucket_name, object_path)
+    modifier_minio_client = _get_minio_client(
+        modifier, minio_users_credentials, minio_server_info
+    )
+    try:
+        modifier_minio_client.remove_object(bucket_name, object_path)
+    finally:
+        creator_minio_client.remove_object(bucket_name, object_path)
 
 
 def _get_minio_client(
