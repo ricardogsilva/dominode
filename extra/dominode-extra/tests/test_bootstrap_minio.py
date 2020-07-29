@@ -221,6 +221,7 @@ def test_user_is_able_to_rename_file_directory(
     pytest.param('ppd_editor1', 'ppd_user2', 'dominode-staging/ppd/file1.txt', id='t123.2'),
     pytest.param('ppd_user1', 'ppd_editor1', 'dominode-staging/ppd/file1.txt', id='t124.1'),
     pytest.param('ppd_editor1', 'ppd_editor2', 'dominode-staging/ppd/file1.txt', id='t124.2'),
+    pytest.param('ppd_editor1', 'ppd_editor2', 'public/ppd/file1.txt', id='t152'),
 ])
 def test_user_is_able_to_edit_file(
         bootstrapped_minio_server,
@@ -301,8 +302,16 @@ def _create_file(
     pytest.param('ppd_user1', 'dominode-staging/lsd/somedir/file2.txt', id='t125, t133.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
     pytest.param('ppd_editor1', 'dominode-staging/lsd/file3.txt', id='t134.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
     pytest.param('ppd_editor1', 'dominode-staging/lsd/somedir/file4.txt', id='t126, t134.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
-    pytest.param('ppd_editor1', 'public/lsd/file3.txt', id='t147.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
-    pytest.param('ppd_editor1', 'public/lsd/somedir/file4.txt', id='t139, t147.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+
+    pytest.param('ppd_user1', 'public/ppd/file3.txt', id='t147.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_user1', 'public/ppd/somedir/file3.txt', id='t139, t147.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+
+    pytest.param('ppd_user1', 'public/lsd/file3.txt', id='t161.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_user1', 'public/lsd/somedir/file4.txt', id='t153, t161.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+
+    pytest.param('ppd_editor1', 'public/lsd/file3.txt', id='t162.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'public/lsd/somedir/file4.txt', id='t154, t162.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+
 ])
 def test_user_is_not_able_to_put_file_in_bucket_owned_by_another_department(
         bootstrapped_minio_server,
@@ -328,8 +337,12 @@ def test_user_is_not_able_to_put_file_in_bucket_owned_by_another_department(
     pytest.param('ppd_user1', 'lsd_user1', 'dominode-staging/ppd/somedir/file2.txt', id='t127, t135.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
     pytest.param('ppd_editor1', 'lsd_editor1', 'dominode-staging/ppd/file3.txt', id='t136.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
     pytest.param('ppd_editor1', 'lsd_editor1', 'dominode-staging/ppd/somedir/file4.txt', id='t128, t136.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
-    pytest.param('ppd_editor1', 'lsd_editor1', 'public/ppd/file3.txt', id='t149.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
-    pytest.param('ppd_editor1', 'lsd_editor1', 'public/ppd/somedir/file4.txt', id='t141, t149.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'ppd_user1', 'public/ppd/file3.txt', id='t149.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'ppd_user1', 'public/ppd/somedir/file4.txt', id='t141, t149.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_user1', 'public/ppd/file3.txt', id='t163.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'public/ppd/file3.txt', id='t164.1', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_user1', 'public/ppd/somedir/file4.txt', id='t155, t163.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'public/ppd/somedir/file4.txt', id='t156, t164.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
 ])
 def test_user_is_not_able_to_delete_file_from_bucket_owned_by_another_department(
         bootstrapped_minio_server,
@@ -358,7 +371,12 @@ def test_user_is_not_able_to_delete_file_from_bucket_owned_by_another_department
     pytest.param('ppd_user1', 'lsd_editor1', 'ppd-staging/file1.txt', 'ppd-staging/extra/file1.txt', id='t102', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
     pytest.param('ppd_user1', 'lsd_user1', 'dominode-staging/ppd/file1.txt', 'dominode-staging/ppd/extra/file1.txt', id='t129', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
     pytest.param('ppd_user1', 'lsd_editor1', 'dominode-staging/ppd/file1.txt', 'dominode-staging/ppd/extra/file1.txt', id='t130', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
-    pytest.param('ppd_editor1', 'lsd_editor1', 'public/ppd/file1.txt', 'public/ppd/extra/file1.txt', id='t143', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+
+    pytest.param('ppd_editor1', 'ppd_user1', 'public/ppd/file1.txt', 'public/ppd/extra/file1.txt', id='t143', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+
+    pytest.param('ppd_editor1', 'lsd_user1', 'public/ppd/file1.txt', 'public/ppd/extra/file1.txt', id='t157', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'public/ppd/file1.txt', 'public/ppd/extra/file1.txt', id='t158', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+
 ])
 def test_user_is_not_able_to_rename_file_directory_on_buckets_owned_by_another_department(
         bootstrapped_minio_server,
@@ -445,6 +463,7 @@ def test_user_is_not_able_to_access_file_on_buckets_owned_by_another_department(
     pytest.param('ppd_editor1', 'lsd_editor1', 'dominode-staging/ppd/file1.txt', id='t138.2', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
     pytest.param('ppd_editor1', 'ppd_user1', 'public/ppd/file1.txt', id='t151', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
     pytest.param('ppd_editor1', 'lsd_user1', 'public/ppd/file1.txt', id='t165', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
+    pytest.param('ppd_editor1', 'lsd_editor1', 'public/ppd/file1.txt', id='t166', marks=pytest.mark.raises(exception=minio.error.AccessDenied)),
 
 ])
 def test_user_is_not_able_to_edit_file(
