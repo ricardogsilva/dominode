@@ -1,14 +1,7 @@
-"""Commands to bootstrap minIO server
+"""Extra admin commands to manage the DomiNode minIO server
 
-- Create buckets
-- Create groups
-- Create policies
-- Apply policies
-
-
-Early example usage:
-poetry run python dominode_extra/minioadmin.py add-department dominode-dev ppd
-poetry run python dominode_extra/minioadmin.py add-user dominode-dev ppd user1 12345678
+This script adds some functions to perform DomiNode related tasks in a more
+expedite manner than using the bare minio client `mc`.
 
 """
 
@@ -24,20 +17,27 @@ from os import fdopen
 import typer
 from enum import Enum
 
-app = typer.Typer()
+from .constants import (
+    DepartmentName,
+    UserRole
+)
+
+_help_intro = 'Manage minIO server'
+
+app = typer.Typer(
+    short_help=_help_intro,
+    help=(
+        f'{_help_intro} - Be sure to install minio CLI client (mc) before '
+        f'using this. Also, create a \'~/.mc/config.json\' file with the '
+        f'credentials of the minIO server that you want to use. Check out the'
+        f'minIO client docs at: \n\n'
+        f'https://docs.min.io/docs/minio-client-quickstart-guide.html\n\n'
+        f'for details on how to download mc and configure it.'
+    )
+)
 
 SUCCESS = "success"
 DEFAULT_CONFIG_DIR = Path('~/.mc').expanduser()
-
-
-class DepartmentName(Enum):
-    PPD = 'ppd'
-    LSD = 'lsd'
-
-
-class UserRole(str, Enum):
-    REGULAR_DEPARTMENT_USER = 'regular_department_user'
-    EDITOR = 'editor'
 
 
 class DomiNodeDepartment:
@@ -323,13 +323,17 @@ def add_department(
 
 
 @app.command()
-def bootstrap_server(
+def bootstrap(
         endpoint_alias: str,
         minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ):
-    # typer.echo(f'locals: {locals()}')
-    # typer.echo(f'config.json: {(minio_client_config_dir / "config.json").read_text()}')
-    # groups cannot be nested
+    """Perform initial bootstrap of the minIO server
+
+    This function will take care of creating the relevant buckets, groups and
+    access controls for using the minIO server for DomiNode.
+
+    """
+
     for member in DepartmentName:
         add_department(endpoint_alias, member, minio_client_config_dir)
 
@@ -485,10 +489,6 @@ def execute_admin_command(
         minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ) -> typing.List:
     """Uses the ``mc`` binary to perform admin tasks on minIO servers"""
-    # typer.echo(f'inside execute_admin_command')
-    # typer.echo(f'endpoint_alias: {endpoint_alias}')
-    # typer.echo(f'minio_client_config_dir: {minio_client_config_dir}')
-    # typer.echo(f'contents of config.json: {(minio_client_config_dir / "config.json").read_text()}')
     full_command = (
         f'mc --config-dir {minio_client_config_dir} --json admin {command} '
         f'{endpoint_alias} {arguments or ""}'
