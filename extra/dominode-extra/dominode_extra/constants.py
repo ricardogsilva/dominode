@@ -1,11 +1,16 @@
-from enum import Enum
+import enum
 
 
-class DepartmentName(Enum):
+class DepartmentName(enum.Enum):
     PPD = 'ppd'
     LSD = 'lsd'
 
 
-class UserRole(str, Enum):
+class UserRole(str, enum.Enum):
     REGULAR_DEPARTMENT_USER = 'regular_department_user'
     EDITOR = 'editor'
+
+
+class GeofenceAccess(enum.Enum):
+    ADMIN = enum.auto()
+    USER = enum.auto()

@@ -3,12 +3,16 @@
 import typer
 from pathlib import Path
 
-from . import minioadmin
-from . import dbadmin
+from . import (
+    dbadmin,
+    geonodeadmin,
+    minioadmin,
+)
 
 app = typer.Typer()
-app.add_typer(minioadmin.app, name='minio')
 app.add_typer(dbadmin.app, name='db')
+app.add_typer(geonodeadmin.app, name='geonode')
+app.add_typer(minioadmin.app, name='minio')
 
 
 @app.command()

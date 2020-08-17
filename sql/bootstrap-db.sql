@@ -162,7 +162,7 @@ CREATE OR REPLACE FUNCTION setStagingPermissions(qualifiedTableName varchar) RET
 CREATE OR REPLACE FUNCTION moveTableToDominodeStagingSchema(qualifiedTableName varchar) RETURNS VOID AS $functionBody$
     -- Move a table from a department's internal schema to the project-wide internal staging schema
     --
-    -- Tables in the department's staging schema are only readable by deparment members, while those
+    -- Tables in the department's staging schema are only readable by department members, while those
     -- on the project-wide staging schema are readable by all users (but they are only editable by
     -- department members).
     --
