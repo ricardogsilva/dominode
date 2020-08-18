@@ -1,14 +1,14 @@
-================================
-Extra DomiNode scripts and tests
-================================
+*********************
+DomiNode bootstrapper
+*********************
 
 =======
 Install
 =======
 
-These use `poetry`_, so clone this project, install poetry and then::
+This uses `poetry`_, so clone this project, install poetry and then::
 
-    cd extra/dominode-extra
+    cd extra/dominode-bootstrapper
     poetry install
 
 
@@ -21,9 +21,9 @@ This package installs the `dominode-admin` CLI tool. Use it like this::
     poetry run dominode-admin --help
 
 
-+++++++++++++++++++++++++++++++++++++
+-------------------------------------
 Bootstrapping DomiNode infrastructure
-+++++++++++++++++++++++++++++++++++++
+-------------------------------------
 
 In order to bootstrap the DomiNode infrastructure either::
 
