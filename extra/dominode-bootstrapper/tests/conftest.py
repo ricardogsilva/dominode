@@ -4,7 +4,6 @@ import shlex
 import subprocess
 import urllib3
 from configparser import ConfigParser
-from pathlib import Path
 from time import sleep
 from urllib3.exceptions import MaxRetryError
 
@@ -46,28 +45,6 @@ def db_admin_credentials():
 
 
 @pytest.fixture(scope='session')
-def db_service_file(
-        db_admin_credentials,
-        tmpdir_factory
-):
-
-    temp_dir = tmpdir_factory.mktemp('db_service_file')
-    config_path = temp_dir.join('pg_service')
-    config = ConfigParser()
-    config[DB_SERVICE_NAME] = {
-        'host': db_admin_credentials['host'],
-        'port': db_admin_credentials['port'],
-        'dbname': db_admin_credentials['db'],
-        'user': db_admin_credentials['user'],
-        'password': db_admin_credentials['password'],
-        'sslmode': 'disable'
-    }
-    with config_path.open('w') as fh:
-        config.write(fh)
-    return config_path.realpath()
-
-
-@pytest.fixture(scope='session')
 def docker_client():
     return docker.from_env()
 
@@ -96,13 +73,15 @@ def db_container(docker_client, db_admin_credentials):
 
 @pytest.fixture(scope='session')
 def db_connection(db_container, db_admin_credentials):
-    engine = sla.create_engine('postgresql://{user}:{password}@{host}:{port}/{db}'.format(
-        user=db_admin_credentials['user'],
-        password=db_admin_credentials['password'],
-        host=db_admin_credentials['host'],
-        port=db_admin_credentials['port'],
-        db=db_admin_credentials['db']
-    ))
+    engine = sla.create_engine(
+        'postgresql://{user}:{password}@{host}:{port}/{db}'.format(
+            user=db_admin_credentials['user'],
+            password=db_admin_credentials['password'],
+            host=db_admin_credentials['host'],
+            port=db_admin_credentials['port'],
+            db=db_admin_credentials['db']
+        )
+    )
     connected = False
     max_tries = 30
     current_try = 0
@@ -123,11 +102,13 @@ def db_connection(db_container, db_admin_credentials):
 
 
 @pytest.fixture(scope='session')
-def bootstrapped_db_connection(db_connection, db_service_file):
+def bootstrapped_db_connection(db_connection, db_admin_credentials):
     completed_process = subprocess.run(
         shlex.split(
-            f'dominode-admin db bootstrap {DB_SERVICE_NAME} '
-            f'--db-service-file={db_service_file}'
+            f'dominode-admin db bootstrap {db_admin_credentials["user"]} '
+            f'{db_admin_credentials["password"]} {db_admin_credentials["db"]} '
+            f'--db-host {db_admin_credentials["host"]} '
+            f'--db-port {db_admin_credentials["port"]}'
         ),
         capture_output=True
     )
@@ -143,15 +124,20 @@ def bootstrapped_db_connection(db_connection, db_service_file):
 def db_users(
         bootstrapped_db_connection,
         db_users_credentials,
-        db_service_file
+        db_admin_credentials
 ):
     for user, user_info in db_users_credentials.items():
         password, department, role = user_info
         completed_process = subprocess.run(
             shlex.split(
-                f'dominode-admin db add-department-user {DB_SERVICE_NAME} '
-                f'{user} {password} {department} --role={role} '
-                f'--db-service-file={db_service_file}'
+                f'dominode-admin db add-department-user '
+                f'{db_admin_credentials["user"]} '
+                f'{db_admin_credentials["password"]} '
+                f'{db_admin_credentials["db"]} '
+                f'{user} {password} {department} '
+                f'--role={role} '
+                f'--db-host={db_admin_credentials["host"]} '
+                f'--db-port={db_admin_credentials["port"]}'
             ),
             capture_output=True
         )

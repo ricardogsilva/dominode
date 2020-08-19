@@ -33,8 +33,11 @@ DEFAULT_DB_SERVICE_FILE = Path('~/.pg_service.conf').expanduser()
 
 @app.command()
 def bootstrap(
-        db_service_name: str,
-        db_service_file: Path = DEFAULT_DB_SERVICE_FILE
+        db_user_name: str,
+        db_user_password: str,
+        db_name: str,
+        db_host: str = 'localhost',
+        db_port: int = 5432,
 ):
     """Perform initial bootstrap of the database
 
@@ -42,7 +45,11 @@ def bootstrap(
     and access controls for using the postgis database for DomiNode.
 
     """
-    db_url = load_postgres_service(db_service_name, db_service_file.read_text())
+
+    db_url = (
+        f'postgresql://{db_user_name}:{db_user_password}@{db_host}:{db_port}/'
+        f'{db_name}'
+    )
     bootstrap_sql_path = APP_ROOT / 'sql/bootstrap-db.sql'
     with get_db_connection(db_url) as db_connection:
         raw_connection = db_connection.connection
@@ -54,14 +61,20 @@ def bootstrap(
 
 @app.command()
 def add_department_user(
-        db_service_name: str,
+        db_user_name: str,
+        db_user_password: str,
+        db_name: str,
         username: str,
         password: str,
         department: DepartmentName,
         role: typing.Optional[UserRole] = UserRole.REGULAR_DEPARTMENT_USER,
-        db_service_file: Path = DEFAULT_DB_SERVICE_FILE
+        db_host: str = 'localhost',
+        db_port: int = 5432,
 ):
-    db_url = load_postgres_service(db_service_name, db_service_file.read_text())
+    db_url = (
+        f'postgresql://{db_user_name}:{db_user_password}@{db_host}:{db_port}/'
+        f'{db_name}'
+    )
     sql_role = {
         UserRole.EDITOR: f'{department.value}_editor',
         UserRole.REGULAR_DEPARTMENT_USER: f'{department.value}_user',
@@ -95,21 +108,3 @@ def get_db_connection(db_url: str):
                 sleep(sleep_for)
             else:
                 raise
-
-
-def load_postgres_service(
-        service:str,
-        service_file_contents: str
-) -> str:
-    config = ConfigParser()
-    config.read_string(service_file_contents)
-    section = config[service]
-    return (
-        f'postgresql://{section["user"]}:{section["password"]}@'
-        f'{section["host"]}:{section.get("port", 5432)}/'
-        f'{section["dbname"]}'
-    )
-
-
-def parse_postgres_service(service: typing.MutableMapping) -> str:
-    pass
