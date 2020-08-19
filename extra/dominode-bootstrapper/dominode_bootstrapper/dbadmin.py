@@ -27,14 +27,14 @@ app = typer.Typer(
     help=_help_intro
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_CONFIG_DIR = Path('~/.pg_service.conf').expanduser()
+APP_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DB_SERVICE_FILE = Path('~/.pg_service.conf').expanduser()
 
 
 @app.command()
 def bootstrap(
         db_service_name: str,
-        db_service_file: Path = DEFAULT_CONFIG_DIR
+        db_service_file: Path = DEFAULT_DB_SERVICE_FILE
 ):
     """Perform initial bootstrap of the database
 
@@ -43,7 +43,7 @@ def bootstrap(
 
     """
     db_url = load_postgres_service(db_service_name, db_service_file.read_text())
-    bootstrap_sql_path = REPO_ROOT / 'sql/bootstrap-db.sql'
+    bootstrap_sql_path = APP_ROOT / 'sql/bootstrap-db.sql'
     with get_db_connection(db_url) as db_connection:
         raw_connection = db_connection.connection
         raw_cursor = raw_connection.cursor()
@@ -59,7 +59,7 @@ def add_department_user(
         password: str,
         department: DepartmentName,
         role: typing.Optional[UserRole] = UserRole.REGULAR_DEPARTMENT_USER,
-        db_service_file: Path = DEFAULT_CONFIG_DIR
+        db_service_file: Path = DEFAULT_DB_SERVICE_FILE
 ):
     db_url = load_postgres_service(db_service_name, db_service_file.read_text())
     sql_role = {

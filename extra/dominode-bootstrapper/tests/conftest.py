@@ -17,7 +17,6 @@ from sqlalchemy.exc import OperationalError
 logger = logging.getLogger(__name__)
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
 DB_SERVICE_NAME = 'dominode-db-dev'
 
 

@@ -19,7 +19,7 @@ app.add_typer(minioadmin.app, name='minio')
 def bootstrap(
         db_service_name: str,
         minio_endpoint_alias: str,
-        db_service_fle: Path = dbadmin.DEFAULT_CONFIG_DIR,
+        db_service_fle: Path = dbadmin.DEFAULT_DB_SERVICE_FILE,
         minio_client_config_dir: Path = minioadmin.DEFAULT_CONFIG_DIR,
 ):
     dbadmin.bootstrap(db_service_name, db_service_fle)
