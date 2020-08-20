@@ -6,16 +6,15 @@ expedite manner than using the bare minio client `mc`.
 """
 
 import json
+import os
 import shlex
 import subprocess
 import tempfile
 import typing
 from contextlib import contextmanager
 from pathlib import Path
-from os import fdopen
 
 import typer
-from enum import Enum
 
 from .constants import (
     DepartmentName,
@@ -42,8 +41,7 @@ DEFAULT_CONFIG_DIR = Path('~/.mc').expanduser()
 
 class DomiNodeDepartment:
     name: str
-    endpoint_alias: str
-    minio_client_config_dir: Path = DEFAULT_CONFIG_DIR
+    minio_parameters: typing.Dict
     dominode_staging_bucket: str = 'dominode-staging'
     public_bucket: str = 'public'
     _policy_version: str = '2012-10-17'
@@ -51,13 +49,22 @@ class DomiNodeDepartment:
     def __init__(
             self,
             name: DepartmentName,
-            endpoint_alias: str,
-            minio_client_config_dir: typing.Optional[Path] = None
+            minio_endpoint_alias: str,
+            minio_access_key: str,
+            minio_secret_key: str,
+            minio_host: str,
+            minio_port: int = 9000,
+            minio_protocol: str = 'https',
     ):
         self.name = name.value
-        self.endpoint_alias = endpoint_alias
-        if minio_client_config_dir is not None:
-            self.minio_client_config_dir = minio_client_config_dir
+        self.minio_parameters = {
+            'alias': minio_endpoint_alias,
+            'access_key': minio_access_key,
+            'secret_key': minio_secret_key,
+            'host': minio_host,
+            'port': minio_port,
+            'protocol': minio_protocol
+        }
 
     @property
     def staging_bucket(self) -> str:
@@ -173,16 +180,8 @@ class DomiNodeDepartment:
         )
 
     def create_groups(self):
-        create_group(
-            self.endpoint_alias,
-            self.regular_users_group,
-            self.minio_client_config_dir
-        )
-        create_group(
-            self.endpoint_alias,
-            self.editors_group,
-            self.minio_client_config_dir
-        )
+        create_group(self.regular_users_group, **self.minio_parameters)
+        create_group(self.editors_group, **self.minio_parameters)
 
     def create_buckets(self):
         extra = '--ignore-existing'
@@ -203,7 +202,7 @@ class DomiNodeDepartment:
                 break  # policy already exists
         else:
             os_file_handler, pathname = tempfile.mkstemp(text=True)
-            with fdopen(os_file_handler, mode='w') as fh:
+            with os.fdopen(os_file_handler, mode='w') as fh:
                 json.dump(policy, fh)
             self._execute_admin_command(
                 'policy add',
@@ -238,12 +237,7 @@ class DomiNodeDepartment:
             secret_key: str,
             role: typing.Optional[UserRole] = UserRole.REGULAR_DEPARTMENT_USER
     ):
-        create_user(
-            self.endpoint_alias,
-            access_key,
-            secret_key,
-            minio_client_config_dir=self.minio_client_config_dir
-        )
+        create_user(access_key, secret_key, **self.minio_parameters)
         group = {
             UserRole.REGULAR_DEPARTMENT_USER: self.regular_users_group,
             UserRole.EDITOR: self.editors_group,
@@ -258,10 +252,9 @@ class DomiNodeDepartment:
             arguments: typing.Optional[str] = None,
     ):
         return execute_command(
-            self.endpoint_alias,
             command,
-            arguments,
-            self.minio_client_config_dir
+            **self.minio_parameters,
+            arguments=arguments,
         )
 
     def _execute_admin_command(
@@ -269,22 +262,25 @@ class DomiNodeDepartment:
             command: str,
             arguments: typing.Optional[str] = None,
     ):
-        return execute_admin_command(
-            self.endpoint_alias,
+        return execute_minio_admin_command(
             command,
-            arguments,
-            self.minio_client_config_dir
+            **self.minio_parameters,
+            arguments=arguments,
         )
 
 
 @app.command()
 def add_department_user(
-        endpoint_alias: str,
-        access_key: str,
-        secret_key: str,
+        user_access_key: str,
+        user_secret_key: str,
         department_name: DepartmentName,
+        admin_access_key: str,
+        admin_secret_key: str,
         role: typing.Optional[UserRole] = UserRole.REGULAR_DEPARTMENT_USER,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+        alias: str = 'dominode_bootstrapper',
+        host: str = 'localhost',
+        port: int = 9000,
+        protocol: str = 'https'
 ):
     """Create a user and add it to the relevant department groups
 
@@ -294,15 +290,21 @@ def add_department_user(
     """
 
     department = DomiNodeDepartment(
-        department_name, endpoint_alias, minio_client_config_dir)
-    return department.add_user(access_key, secret_key, role)
+        department_name, alias, admin_access_key, admin_secret_key, host,
+        port, protocol
+    )
+    return department.add_user(user_access_key, user_secret_key, role)
 
 
 @app.command()
 def add_department(
-        endpoint_alias: str,
         name: DepartmentName,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+        access_key: str,
+        secret_key: str,
+        alias: str = 'dominode_bootstrapper',
+        host: str = 'localhost',
+        port: int = 9000,
+        protocol: str = 'https'
 ):
     """Add a new department
 
@@ -314,18 +316,25 @@ def add_department(
     """
 
     department = DomiNodeDepartment(
-        name, endpoint_alias, minio_client_config_dir)
-    # typer.echo(f'department config_dir: {department.minio_client_config_dir}')
+        name, alias, access_key, secret_key, host, port, protocol)
+    typer.echo(f'Creating groups...')
     department.create_groups()
+    typer.echo(f'Creating buckets...')
     department.create_buckets()
+    typer.echo(f'Creating policies...')
     department.create_policies()
+    typer.echo(f'Setting policies...')
     department.set_policies()
 
 
 @app.command()
 def bootstrap(
-        endpoint_alias: str,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+        access_key: str,
+        secret_key: str,
+        alias: str = 'dominode_bootstrapper',
+        host: str = 'localhost',
+        port: int = 9000,
+        protocol: str = 'https'
 ):
     """Perform initial bootstrap of the minIO server
 
@@ -335,32 +344,46 @@ def bootstrap(
     """
 
     for member in DepartmentName:
-        add_department(endpoint_alias, member, minio_client_config_dir)
+        typer.echo(f'Bootstrapping department {member.name!r}...')
+        add_department(
+            member, access_key, secret_key,
+            alias=alias,
+            host=host,
+            port=port,
+            protocol=protocol
+        )
 
 
 def create_group(
-        endpoint_alias: str,
         group: str,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+        alias: str,
+        access_key: str,
+        secret_key: str,
+        host: str,
+        port: int,
+        protocol: str = 'https'
 ) -> typing.Optional[str]:
-    existing_groups = execute_admin_command(
-        endpoint_alias,
-        'group list',
-        minio_client_config_dir=minio_client_config_dir
-    )
+    minio_kwargs = {
+        'alias': alias,
+        'access_key': access_key,
+        'secret_key': secret_key,
+        'host': host,
+        'port': port,
+        'protocol': protocol
+    }
+    existing_groups = execute_minio_admin_command('group list', **minio_kwargs)
     for existing in existing_groups:
         if existing.get('name') == group:
             result = group
             break
     else:
         # minio does not allow creating empty groups so we need a user first
-        with get_temp_user(endpoint_alias, minio_client_config_dir) as user:
+        with get_temp_user(**minio_kwargs) as user:
             temp_access_key = user[0]
-            creation_result = execute_admin_command(
-                endpoint_alias,
+            creation_result = execute_minio_admin_command(
                 'group add',
-                f'{group} {temp_access_key}',
-                minio_client_config_dir=minio_client_config_dir
+                **minio_kwargs,
+                arguments=f'{group} {temp_access_key}',
             )
             relevant_result = creation_result[0]
             if relevant_result.get('status') == SUCCESS:
@@ -371,30 +394,53 @@ def create_group(
 
 
 def remove_group(
-        endpoint_alias: str,
         group: str,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+        alias: str,
+        access_key: str,
+        secret_key: str,
+        host: str,
+        port: int,
+        protocol: str = 'https'
 ):
-    removal_result = execute_admin_command(
-        endpoint_alias, 'group remove', group, minio_client_config_dir)
+    minio_kwargs = {
+        'alias': alias,
+        'access_key': access_key,
+        'secret_key': secret_key,
+        'host': host,
+        'port': port,
+        'protocol': protocol
+    }
+    removal_result = execute_minio_admin_command(
+        'group remove', arguments=group, **minio_kwargs)
     return removal_result[0].get('status') == SUCCESS
 
 
 def create_temp_user(
-        endpoint_alias: str,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+        alias: str,
+        access_key: str,
+        secret_key: str,
+        host: str,
+        port: int,
+        protocol: str = 'https'
 ) -> typing.Optional[typing.Tuple[str, str]]:
-    access_key = 'tempuser'
-    secret_key = '12345678'
+    temp_access_key = 'tempuser'
+    temp_secret_key = '12345678'
+    minio_kwargs = {
+        'alias': alias,
+        'access_key': access_key,
+        'secret_key': secret_key,
+        'host': host,
+        'port': port,
+        'protocol': protocol
+    }
     created = create_user(
-        endpoint_alias,
-        access_key,
-        secret_key,
+        temp_access_key,
+        temp_secret_key,
         force=True,
-        minio_client_config_dir=minio_client_config_dir
+        **minio_kwargs,
     )
     if created:
-        result = access_key, secret_key
+        result = temp_access_key, temp_secret_key
     else:
         result = None
     return result
@@ -402,52 +448,70 @@ def create_temp_user(
 
 @contextmanager
 def get_temp_user(
-        endpoint_alias: str,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+        alias: str,
+        access_key: str,
+        secret_key: str,
+        host: str,
+        port: int,
+        protocol: str = 'https'
 ):
-    user_creds = create_temp_user(endpoint_alias, minio_client_config_dir)
+    minio_kwargs = {
+        'alias': alias,
+        'access_key': access_key,
+        'secret_key': secret_key,
+        'host': host,
+        'port': port,
+        'protocol': protocol
+    }
+    user_creds = create_temp_user(**minio_kwargs)
     if user_creds is not None:
-        access_key, secret_key = user_creds
+        user_access_key, user_secret_key = user_creds
         try:
             yield user_creds
         finally:
-            execute_admin_command(
-                endpoint_alias,
+            execute_minio_admin_command(
                 'user remove',
-                access_key,
-                minio_client_config_dir=minio_client_config_dir
+                arguments=user_access_key,
+                **minio_kwargs
             )
 
 
 def create_user(
-        endpoint_alias: str,
+        user_access_key: str,
+        user_secret_key: str,
+        alias: str,
         access_key: str,
         secret_key: str,
+        host: str,
+        port: int,
+        protocol: str = 'https',
         force: bool = False,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ) -> bool:
+    minio_kwargs = {
+        'alias': alias,
+        'access_key': access_key,
+        'secret_key': secret_key,
+        'host': host,
+        'port': port,
+        'protocol': protocol
+    }
     # minio allows overwriting users with the same access_key, so we check if
     # user exists first
-    existing_users = execute_admin_command(
-        endpoint_alias,
-        'user list',
-        minio_client_config_dir=minio_client_config_dir
-    )
+    existing_users = execute_minio_admin_command('user list', **minio_kwargs)
     if len(secret_key) < 8:
         raise RuntimeError(
             'Please choose a secret key with 8 or more characters')
     for existing in existing_users:
-        if existing.get('accessKey') == access_key:
+        if existing.get('accessKey') == user_access_key:
             user_already_exists = True
             break
     else:
         user_already_exists = False
     if not user_already_exists or (user_already_exists and force):
-        creation_result = execute_admin_command(
-            endpoint_alias,
+        creation_result = execute_minio_admin_command(
             'user add',
-            f'{access_key} {secret_key}',
-            minio_client_config_dir=minio_client_config_dir
+            arguments=f'{user_access_key} {user_secret_key}',
+            **minio_kwargs
         )
         result = creation_result[0].get('status') == SUCCESS
     elif user_already_exists:  # TODO: should log that user was not recreated
@@ -458,20 +522,27 @@ def create_user(
 
 
 def execute_command(
-        endpoint_alias: str,
         command: str,
+        alias: str,
+        access_key: str,
+        secret_key: str,
+        host: str,
+        port: int,
+        protocol: str = 'https',
         arguments: typing.Optional[str] = None,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ):
-    full_command = (
-        f'mc --config-dir {minio_client_config_dir} --json {command} '
-        f'{"/".join((endpoint_alias, arguments or ""))}'
-    )
+    full_command = f'mc --json {command} {"/".join((alias, arguments or ""))}'
     typer.echo(full_command)
     parsed_command = shlex.split(full_command)
+    process_env = os.environ.copy()
+    process_env.update({
+        f'MC_HOST_{alias}': (
+            f'{protocol}://{access_key}:{secret_key}@{host}:{port}')
+    })
     completed = subprocess.run(
         parsed_command,
-        capture_output=True
+        capture_output=True,
+        env=process_env
     )
     try:
         completed.check_returncode()
@@ -482,23 +553,55 @@ def execute_command(
     return result
 
 
-def execute_admin_command(
-        endpoint_alias: str,
+# def old_execute_admin_command(
+#         endpoint_alias: str,
+#         command: str,
+#         arguments: typing.Optional[str] = None,
+#         minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
+# ) -> typing.List:
+#     """Uses the ``mc`` binary to perform admin tasks on minIO servers"""
+#     full_command = (
+#         f'mc --config-dir {minio_client_config_dir} --json admin {command} '
+#         f'{endpoint_alias} {arguments or ""}'
+#     )
+#     parsed_command = shlex.split(full_command)
+#     completed = subprocess.run(
+#         parsed_command,
+#         capture_output=True
+#     )
+#     try:
+#         completed.check_returncode()
+#     except subprocess.CalledProcessError:
+#         typer.echo(completed.stdout)
+#         typer.echo(completed.stderr)
+#         raise
+#     result = [json.loads(line) for line in completed.stdout.splitlines()]
+#     return result
+
+
+def execute_minio_admin_command(
         command: str,
+        alias: str,
+        access_key: str,
+        secret_key: str,
+        host: str,
+        port: int,
+        protocol: str = 'https',
         arguments: typing.Optional[str] = None,
-        minio_client_config_dir: typing.Optional[Path] = DEFAULT_CONFIG_DIR
 ) -> typing.List:
     """Uses the ``mc`` binary to perform admin tasks on minIO servers"""
-    full_command = (
-        f'mc --config-dir {minio_client_config_dir} --json admin {command} '
-        f'{endpoint_alias} {arguments or ""}'
-    )
-
-
+    full_command = f'mc --json admin {command} {alias} {arguments or ""}'
+    typer.echo(f'Executing admin command: {full_command!r}...')
     parsed_command = shlex.split(full_command)
+    process_env = os.environ.copy()
+    process_env.update({
+        f'MC_HOST_{alias}': (
+            f'{protocol}://{access_key}:{secret_key}@{host}:{port}')
+    })
     completed = subprocess.run(
         parsed_command,
-        capture_output=True
+        capture_output=True,
+        env=process_env
     )
     try:
         completed.check_returncode()

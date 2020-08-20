@@ -255,30 +255,19 @@ def bootstrapped_minio_server(
         minio_server_info,
         minio_client,  # here just to make sure server is already usable
         minio_users_credentials,
-        tmpdir_factory
 ):
-    temp_dir = tmpdir_factory.mktemp('minio_client')
-    config_path = temp_dir.join('config.json')
     server_alias = 'dominode-pytest'
-    config_path.write_text(
-        json.dumps({
-            'version': '9',
-            'hosts': {
-                server_alias: {
-                    'url': f'http://localhost:{minio_server_info["port"]}',
-                    'accessKey': minio_server_info['access_key'],
-                    'secretKey': minio_server_info['secret_key'],
-                    'api': 'S3v4',
-                    'lookup': 'auto',
-                }
-            }
-        }),
-        'utf-8'
+    command_kwargs = (
+        f'--alias {server_alias} '
+        f'--host localhost '
+        f'--port {minio_server_info["port"]} '
+        f'--protocol http '
     )
     completed_process = subprocess.run(
         shlex.split(
-            f'dominode-admin minio bootstrap {server_alias} '
-            f'--minio-client-config-dir={temp_dir}'
+            f'dominode-admin minio bootstrap {command_kwargs} '
+            f'{minio_server_info["access_key"]} '
+            f'{minio_server_info["secret_key"]}'
         ),
         capture_output=True
     )
@@ -293,9 +282,10 @@ def bootstrapped_minio_server(
         secret_key, department_name, role = user_info
         completed_process = subprocess.run(
             shlex.split(
-                f'dominode-admin minio add-department-user {server_alias} {access_key} '
-                f'{secret_key} {department_name} --role={role} '
-                f'--minio-client-config-dir={temp_dir}'
+                f'dominode-admin minio add-department-user {command_kwargs} '
+                f'--role {role} {access_key} {secret_key} {department_name} '
+                f'{minio_server_info["access_key"]} '
+                f'{minio_server_info["secret_key"]}'
             ),
             capture_output=True
         )
