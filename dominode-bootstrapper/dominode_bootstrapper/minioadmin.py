@@ -16,10 +16,8 @@ from pathlib import Path
 
 import typer
 
-from .constants import (
-    DepartmentName,
-    UserRole
-)
+from .constants import UserRole
+from . import utils
 
 _help_intro = 'Manage minIO server'
 
@@ -37,6 +35,7 @@ app = typer.Typer(
 
 SUCCESS = "success"
 DEFAULT_CONFIG_DIR = Path('~/.mc').expanduser()
+config = utils.load_config()
 
 
 class DomiNodeDepartment:
@@ -48,7 +47,7 @@ class DomiNodeDepartment:
 
     def __init__(
             self,
-            name: DepartmentName,
+            name: str,
             minio_endpoint_alias: str,
             minio_access_key: str,
             minio_secret_key: str,
@@ -56,7 +55,7 @@ class DomiNodeDepartment:
             minio_port: int = 9000,
             minio_protocol: str = 'https',
     ):
-        self.name = name.value
+        self.name = name
         self.minio_parameters = {
             'alias': minio_endpoint_alias,
             'access_key': minio_access_key,
@@ -273,14 +272,15 @@ class DomiNodeDepartment:
 def add_department_user(
         user_access_key: str,
         user_secret_key: str,
-        department_name: DepartmentName,
-        admin_access_key: str,
-        admin_secret_key: str,
+        department_name: str,
         role: typing.Optional[UserRole] = UserRole.REGULAR_DEPARTMENT_USER,
+        access_key: typing.Optional[str] = config['minio']['admin_access_key'],
+        secret_key: typing.Optional[str] = config['minio']['admin_secret_key'],
         alias: str = 'dominode_bootstrapper',
-        host: str = 'localhost',
-        port: int = 9000,
-        protocol: str = 'https'
+        host: typing.Optional[str] = config['minio']['host'],
+        port: typing.Optional[int] = config['minio']['port'],
+        protocol: typing.Optional[str] = config['minio']['protocol']
+
 ):
     """Create a user and add it to the relevant department groups
 
@@ -290,7 +290,7 @@ def add_department_user(
     """
 
     department = DomiNodeDepartment(
-        department_name, alias, admin_access_key, admin_secret_key, host,
+        department_name, alias, access_key, secret_key, host,
         port, protocol
     )
     return department.add_user(user_access_key, user_secret_key, role)
@@ -298,13 +298,13 @@ def add_department_user(
 
 @app.command()
 def add_department(
-        name: DepartmentName,
-        access_key: str,
-        secret_key: str,
+        name: str,
+        access_key: typing.Optional[str] = config['minio']['admin_access_key'],
+        secret_key: typing.Optional[str] = config['minio']['admin_secret_key'],
         alias: str = 'dominode_bootstrapper',
-        host: str = 'localhost',
-        port: int = 9000,
-        protocol: str = 'https'
+        host: typing.Optional[str] = config['minio']['host'],
+        port: typing.Optional[int] = config['minio']['port'],
+        protocol: typing.Optional[str] = config['minio']['protocol']
 ):
     """Add a new department
 
@@ -329,12 +329,12 @@ def add_department(
 
 @app.command()
 def bootstrap(
-        access_key: str,
-        secret_key: str,
+        access_key: typing.Optional[str] = config['minio']['admin_access_key'],
+        secret_key: typing.Optional[str] = config['minio']['admin_secret_key'],
         alias: str = 'dominode_bootstrapper',
-        host: str = 'localhost',
-        port: int = 9000,
-        protocol: str = 'https'
+        host: typing.Optional[str] = config['minio']['host'],
+        port: typing.Optional[int] = config['minio']['port'],
+        protocol: typing.Optional[str] = config['minio']['protocol']
 ):
     """Perform initial bootstrap of the minIO server
 
@@ -343,10 +343,10 @@ def bootstrap(
 
     """
 
-    for member in DepartmentName:
-        typer.echo(f'Bootstrapping department {member.name!r}...')
+    for department in utils.get_departments(config):
+        typer.echo(f'Bootstrapping department {department!r}...')
         add_department(
-            member, access_key, secret_key,
+            department, access_key, secret_key,
             alias=alias,
             host=host,
             port=port,

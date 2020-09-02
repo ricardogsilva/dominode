@@ -105,10 +105,12 @@ def db_connection(db_container, db_admin_credentials):
 def bootstrapped_db_connection(db_connection, db_admin_credentials):
     completed_process = subprocess.run(
         shlex.split(
-            f'dominode-admin db bootstrap {db_admin_credentials["user"]} '
-            f'{db_admin_credentials["password"]} {db_admin_credentials["db"]} '
-            f'--db-host {db_admin_credentials["host"]} '
-            f'--db-port {db_admin_credentials["port"]}'
+            f'dominode-admin db bootstrap '
+            f'--db-username={db_admin_credentials["user"]} '
+            f'--db-password={db_admin_credentials["password"]} '
+            f'--db-name={db_admin_credentials["db"]} '
+            f'--db-host={db_admin_credentials["host"]} '
+            f'--db-port={db_admin_credentials["port"]}'
         ),
         capture_output=True
     )
@@ -131,13 +133,15 @@ def db_users(
         completed_process = subprocess.run(
             shlex.split(
                 f'dominode-admin db add-department-user '
-                f'{db_admin_credentials["user"]} '
-                f'{db_admin_credentials["password"]} '
-                f'{db_admin_credentials["db"]} '
-                f'{user} {password} {department} '
+                f'{user} '
+                f'{password} '
+                f'{department} '
                 f'--role={role} '
+                f'--db-admin-username={db_admin_credentials["user"]} '
+                f'--db-admin-password={db_admin_credentials["password"]} '
                 f'--db-host={db_admin_credentials["host"]} '
-                f'--db-port={db_admin_credentials["port"]}'
+                f'--db-port={db_admin_credentials["port"]} '
+                f'--db-name={db_admin_credentials["db"]}'
             ),
             capture_output=True
         )
@@ -258,16 +262,16 @@ def bootstrapped_minio_server(
 ):
     server_alias = 'dominode-pytest'
     command_kwargs = (
-        f'--alias {server_alias} '
-        f'--host localhost '
-        f'--port {minio_server_info["port"]} '
-        f'--protocol http '
+        f'--access-key={minio_server_info["access_key"]} '
+        f'--secret-key={minio_server_info["secret_key"]} '
+        f'--alias={server_alias} '
+        f'--host=localhost '
+        f'--port={minio_server_info["port"]} '
+        f'--protocol=http '
     )
     completed_process = subprocess.run(
         shlex.split(
             f'dominode-admin minio bootstrap {command_kwargs} '
-            f'{minio_server_info["access_key"]} '
-            f'{minio_server_info["secret_key"]}'
         ),
         capture_output=True
     )
@@ -284,8 +288,6 @@ def bootstrapped_minio_server(
             shlex.split(
                 f'dominode-admin minio add-department-user {command_kwargs} '
                 f'--role {role} {access_key} {secret_key} {department_name} '
-                f'{minio_server_info["access_key"]} '
-                f'{minio_server_info["secret_key"]}'
             ),
             capture_output=True
         )
