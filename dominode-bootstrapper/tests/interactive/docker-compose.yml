@@ -2,28 +2,12 @@
 #
 # docker-compose up -d
 #
-# docker-compose run \
-#     --name test-bootstrap \
-#     --rm \
-#     bootstrapper \
-#     bootstrap \
-#         --db-host db \
-#         --minio-host minio \
-#         --minio-protocol http \
-#         postgres postgres myuser mypassword
+# docker-compose run --name test-bootstrap --rm bootstrapper bootstrap
 #
 # Alternatively, bootstrap individual components:
 #
-# docker-compose run \
-#     --name test-bootstrap-db \
-#     --rm \
-#     bootstrapper \
-#     db bootstrap postgres postgres postgres --db-host db
-#
-# docker-compose run \
-#     --name test-bootstrap-minio \
-#     --rm bootstrapper \
-#     minio bootstrap --host minio --protocol http myuser mypassword
+# docker-compose run --name test-bootstrap-db --rm bootstrapper db bootstrap
+# docker-compose run --name test-bootstrap-minio --rm bootstrapper minio bootstrap
 #
 # docker-compose down
 
@@ -37,6 +21,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+    - target: 5432
+      published: 5433
 
   minio:
     image: minio/minio
@@ -47,3 +34,17 @@ services:
 
   bootstrapper:
     image: kartoza/dominode_bootstrapper:0.1.0
+    environment:
+      DOMINODE__DB__ADMIN_USERNAME: postgres
+      DOMINODE__DB__ADMIN_PASSWORD: postgres
+      DOMINODE__DB__NAME: postgres
+      DOMINODE__DB__HOST: db
+      DOMINODE__DB__PORT: 5432
+      DOMINODE__MINIO__HOST: minio
+      DOMINODE__MINIO__PORT: 9000
+      DOMINODE__MINIO__PROTOCOL: http
+      DOMINODE__MINIO__ADMIN_ACCESS_KEY: myuser
+      DOMINODE__MINIO__ADMIN_SECRET_KEY: mypassword
+      DOMINODE__DEPARTMENT__PPD__GEOSERVER_PASSWORD: geo_ppd
+      DOMINODE__DEPARTMENT__LSD__GEOSERVER_PASSWORD: geo_lsd
+      DOMINODE__DEPARTMENT__FISH__GEOSERVER_PASSWORD: geo_fish

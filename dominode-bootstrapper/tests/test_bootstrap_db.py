@@ -27,7 +27,8 @@ def test_user_can_create_tables_on_staging_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(
+                    f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             transaction.rollback()
 
@@ -101,7 +102,8 @@ def test_user_can_call_setStagingPermissions_on_staging_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(
+                    f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             owner_result = connection.execute(
                 sla.text(
@@ -138,7 +140,8 @@ def test_user_can_insert_features_on_staging_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(
+                    f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -174,7 +177,8 @@ def test_user_can_select_features_on_staging_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(
+                    f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(
                 sla.text(
@@ -217,7 +221,8 @@ def test_user_can_delete_features_on_staging_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(
+                    f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -260,7 +265,7 @@ def test_user_can_update_features_on_staging_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -305,7 +310,7 @@ def test_user_can_delete_table_on_staging_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(f'DROP TABLE {table_name}')
             transaction.rollback()
@@ -338,7 +343,7 @@ def test_user_can_select_features_from_any_table_staging_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -393,7 +398,7 @@ def test_user_cannot_call_setStagingPermissions_on_table_created_by_another_user
         transaction = connection.begin()
         try:
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
         finally:
             with creator_engine.connect() as connection:
@@ -424,13 +429,13 @@ def test_same_department_user_can_call_moveTableToDominodeStaging_on_table_creat
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
     with modifier_engine.connect() as connection:
         with connection.begin() as transaction:
             connection.execute(
-                sla.text(f'SELECT moveTableToDominodeStagingSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToDominodeStagingSchema(\'{table_name}\')')
             )
     new_table_name = table_name.replace(schemaname, 'dominode_staging')
     with creator_engine.connect() as connection:
@@ -461,14 +466,14 @@ def test_user_cannot_call_moveTableToDominodeStagingSchema_on_table_owned_by_ano
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
     with modifier_engine.connect() as connection:
         transaction = connection.begin()
         try:
             connection.execute(
-                sla.text(f'SELECT moveTableToDominodeStagingSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToDominodeStagingSchema(\'{table_name}\')')
             )
         finally:
             with creator_engine.connect() as connection:
@@ -500,14 +505,14 @@ def test_user_cannot_call_moveTableToPublicSchema_on_table_owned_by_another_depa
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
     with modifier_engine.connect() as connection:
         transaction = connection.begin()
         try:
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
         finally:
             with creator_engine.connect() as connection:
@@ -539,7 +544,7 @@ def test_same_department_user_can_insert_features_on_table_created_by_another_us
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
     with modifier_engine.connect() as connection:
@@ -583,7 +588,7 @@ def test_same_department_user_can_delete_features_on_table_created_by_another_us
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -632,7 +637,7 @@ def test_same_department_user_can_update_features_on_table_created_by_another_us
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -683,7 +688,7 @@ def test_same_department_user_can_delete_table_created_by_another_user_on_stagin
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
     with modifier_engine.connect() as connection:
@@ -711,7 +716,7 @@ def test_user_cannot_create_tables_on_another_department_staging_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             transaction.rollback()
 
@@ -747,7 +752,7 @@ def test_user_cannot_select_features_on_table_from_another_department_staging_sc
                 geom='LINESTRING(-71.160 42.258, -71.160 42.259, -71.161 42.25)'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
     with modifier_engine.connect() as connection:
@@ -787,7 +792,7 @@ def test_user_cannot_insert_features_on_table_owned_by_another_department(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
     with modifier_engine.connect() as connection:
@@ -838,7 +843,7 @@ def test_user_cannot_delete_features_on_table_owned_by_another_department(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -891,7 +896,7 @@ def test_user_cannot_update_features_on_table_owned_by_another_department(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -949,7 +954,7 @@ def test_user_cannot_delete_table_owned_by_another_department(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
     with modifier_engine.connect() as connection:
@@ -985,10 +990,10 @@ def test_user_can_call_moveTableToDominodeStagingSchema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToDominodeStagingSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToDominodeStagingSchema(\'{table_name}\')')
             )
             owner_result = connection.execute(
                 sla.text(
@@ -1027,7 +1032,7 @@ def test_user_can_call_moveTableToDominodeStagingSchema_without_calling_setStagi
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToDominodeStagingSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToDominodeStagingSchema(\'{table_name}\')')
             )
             owner_result = connection.execute(
                 sla.text(
@@ -1066,7 +1071,7 @@ def test_editor_user_can_call_moveTableToPublicSchema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToDominodeStagingSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToDominodeStagingSchema(\'{table_name}\')')
             )
             owner_result = connection.execute(
                 sla.text(
@@ -1105,7 +1110,7 @@ def test_regular_user_cannot_call_moveTableToPublicSchema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
             owner_result = connection.execute(
                 sla.text(
@@ -1140,10 +1145,10 @@ def test_editor_user_cannot_insert_features_on_public_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
             public_table_name = table_name.replace(schemaname, 'public')
             insert_query = sla.text(
@@ -1178,7 +1183,7 @@ def test_editor_user_cannot_update_features_on_public_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -1190,7 +1195,7 @@ def test_editor_user_cannot_update_features_on_public_schema(
                 geom='LINESTRING(-71.160 42.258, -71.160 42.259, -71.161 42.25)'
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
             public_table_name = table_name.replace(schemaname, 'public')
             update_query = sla.text(
@@ -1225,7 +1230,7 @@ def test_editor_user_cannot_delete_features_on_public_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -1237,7 +1242,7 @@ def test_editor_user_cannot_delete_features_on_public_schema(
                 geom='LINESTRING(-71.160 42.258, -71.160 42.259, -71.161 42.25)'
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
             public_table_name = table_name.replace(schemaname, 'public')
             update_query = sla.text(
@@ -1271,10 +1276,10 @@ def test_editor_user_can_delete_table_from_public_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
             public_table_name = table_name.replace(schemaname, 'public')
             connection.execute(f'DROP TABLE {public_table_name}')
@@ -1305,10 +1310,10 @@ def test_regular_user_cannot_insert_features_on_table_in_public_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
     public_table_name = table_name.replace(schemaname, 'public')
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
@@ -1357,7 +1362,7 @@ def test_regular_user_cannot_update_features_on_table_in_public_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             insert_query = sla.text(
                 f'INSERT INTO {table_name} (road_name, geom) VALUES (:name, ST_GeomFromText(:geom, 4326))'
@@ -1369,7 +1374,7 @@ def test_regular_user_cannot_update_features_on_table_in_public_schema(
                 geom='LINESTRING(-71.160 42.258, -71.160 42.259, -71.161 42.25)'
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
     public_table_name = table_name.replace(schemaname, 'public')
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
@@ -1418,10 +1423,10 @@ def test_regular_user_cannot_delete_table_in_public_schema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
     public_table_name = table_name.replace(schemaname, 'public')
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
@@ -1470,10 +1475,10 @@ def test_user_can_select_features_in_public_schema(
                 geom='LINESTRING(-71.160 42.258, -71.160 42.259, -71.161 42.25)'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
     public_table_name = table_name.replace(schemaname, 'public')
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
@@ -1519,10 +1524,10 @@ def test_regular_user_cannot_delete_features_from_table_in_public_schema(
                 geom='LINESTRING(-71.160 42.258, -71.160 42.259, -71.161 42.25)'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
     public_table_name = table_name.replace(schemaname, 'public')
     modifier_engine = _connect_to_db(modifier_username, db_admin_credentials, db_users_credentials)
@@ -1569,10 +1574,10 @@ def test_regular_user_can_call_copyTableBackToStagingSchema(
                 f'(id serial, road_name text, geom geometry(LINESTRING, 4326))'
             )
             connection.execute(
-                sla.text(f'SELECT setStagingPermissions(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeSetStagingPermissions(\'{table_name}\')')
             )
             connection.execute(
-                sla.text(f'SELECT moveTableToPublicSchema(\'{table_name}\')')
+                sla.text(f'SELECT DomiNodeMoveTableToPublicSchema(\'{table_name}\')')
             )
     public_table_name = table_name.replace(initial_schemaname, 'public')
     copied_table_name = public_table_name.replace(
@@ -1581,7 +1586,7 @@ def test_regular_user_can_call_copyTableBackToStagingSchema(
     with modifier_engine.connect() as connection:
         connection.execute(
             sla.text(
-                f'SELECT copyTableBackToStagingSchema('
+                f'SELECT DomiNodeCopyTableBackToStagingSchema('
                 f'\'{public_table_name}\', \'{copied_table_name}\')'
             )
         )

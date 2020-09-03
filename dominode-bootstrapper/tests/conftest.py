@@ -106,8 +106,8 @@ def bootstrapped_db_connection(db_connection, db_admin_credentials):
     completed_process = subprocess.run(
         shlex.split(
             f'dominode-admin db bootstrap '
-            f'--db-username={db_admin_credentials["user"]} '
-            f'--db-password={db_admin_credentials["password"]} '
+            f'--db-admin-username={db_admin_credentials["user"]} '
+            f'--db-admin-password={db_admin_credentials["password"]} '
             f'--db-name={db_admin_credentials["db"]} '
             f'--db-host={db_admin_credentials["host"]} '
             f'--db-port={db_admin_credentials["port"]}'

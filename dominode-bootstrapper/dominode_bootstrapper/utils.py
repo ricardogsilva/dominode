@@ -5,20 +5,22 @@ from pathlib import Path
 
 import typer
 
-from .constants import DepartmentName
 
-_DEFAULT_CONFIG_PATHS = (
-    Path('/etc/dominode/.dominode-bootstrapper.conf'),
-    Path('~/.dominode-bootstrapper.conf').expanduser(),
-    Path(__file__).resolve().parents[1] / '.dominode-bootstrapper.conf',
-    os.getenv('DOMINODE_BOOTSTRAPPER_CONFIG_PATH', '/dev/null'),
-)
+def _get_default_config_paths() -> typing.Tuple:
+    result = [
+        Path('/etc/dominode/dominode-bootstrapper.conf'),
+        Path(typer.get_app_dir('dominode-bootstrapper')) / 'config.conf',
+    ]
+    from_env_path = os.getenv('DOMINODE_BOOTSTRAPPER_CONFIG_PATH')
+    if from_env_path:
+        result.append(Path(from_env_path))
+    return tuple(result)
 
 
 def load_config(
         paths: typing.Optional[
             typing.Iterable[typing.Union[str, Path]]
-        ] = _DEFAULT_CONFIG_PATHS
+        ] = _get_default_config_paths()
 ) -> ConfigParser:
     """Load configuration values
 
@@ -29,8 +31,7 @@ def load_config(
 
     - The following paths, if they exist:
       - /etc/dominode/.dominode-bootstrapper.conf
-      - $HOME/.dominode-bootstrapper.conf
-      - {current-directory}/.dominode-bootstrapper.conf
+      - $HOME/.config/dominode-bootstrapper/config.conf
       - whatever file is specified by the DOMINODE_BOOTSTRAPPER_CONFIG_PATH
         environment variable
 
@@ -39,8 +40,7 @@ def load_config(
     """
 
     config = _get_default_config()
-    read_from = config.read(paths)
-    typer.echo(f'Read config from {", ".join(read_from)}')
+    config.read(paths)
     for section, section_options in get_config_from_env().items():
         for key, value in section_options.items():
             try:
@@ -83,10 +83,6 @@ def get_config_from_env() -> typing.Dict[str, typing.Dict[str, str]]:
 
 def _get_default_config():
     config = ConfigParser()
-    for member in DepartmentName:
-        section_name = f'{member.value}-department'
-        config[section_name] = {}
-        config[section_name]['geoserver_password'] = "dominode"
     config['db'] = {}
     config['db']['name'] = 'postgres'
     config['db']['host'] = 'localhost'
@@ -99,6 +95,14 @@ def _get_default_config():
     config['minio']['protocol'] = 'https'
     config['minio']['admin_access_key'] = 'admin'
     config['minio']['admin_secret_key'] = 'admin'
+    default_departments = (
+        'ppd',
+        'lsd',
+    )
+    for department in default_departments:
+        section_name = f'{department}-department'
+        config[section_name] = {}
+        config[section_name]['geoserver_password'] = 'dominode'
     return config
 
 

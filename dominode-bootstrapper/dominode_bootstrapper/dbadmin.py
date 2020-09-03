@@ -32,8 +32,8 @@ config = utils.load_config()
 
 @app.command()
 def bootstrap(
-        db_username: typing.Optional[str] = config['db']['admin_username'],
-        db_password: typing.Optional[str] = config['db']['admin_password'],
+        db_admin_username: typing.Optional[str] = config['db']['admin_username'],
+        db_admin_password: typing.Optional[str] = config['db']['admin_password'],
         db_name: typing.Optional[str] = config['db']['name'],
         db_host: str = config['db']['host'],
         db_port: int = config['db']['port'],
@@ -46,8 +46,8 @@ def bootstrap(
     """
 
     db_url = (
-        f'postgresql://{db_username}:{db_password}@{db_host}:{db_port}/'
-        f'{db_name or db_username}'
+        f'postgresql://{db_admin_username}:{db_admin_password}@'
+        f'{db_host}:{db_port}/{db_name or db_admin_username}'
     )
     dominode_staging_schema_name = 'dominode_staging'
     with get_db_connection(db_url) as db_connection:

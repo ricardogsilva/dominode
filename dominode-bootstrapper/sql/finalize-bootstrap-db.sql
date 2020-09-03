@@ -26,7 +26,7 @@ GRANT SELECT ON public.layer_styles TO dominode_user;
 
 -- Create helper functions in order to facilitate loading datasets
 
-CREATE OR REPLACE FUNCTION setStagingPermissions(qualifiedTableName varchar) RETURNS VOID AS $functionBody$
+CREATE OR REPLACE FUNCTION DomiNodeSetStagingPermissions(qualifiedTableName varchar) RETURNS VOID AS $functionBody$
 --   1. assign ownership to the group role
 --
 --      ALTER TABLE ppd_staging."ppd_rrmap_v0.0.1-staging" OWNER TO ppd_editor;
@@ -55,7 +55,7 @@ CREATE OR REPLACE FUNCTION setStagingPermissions(qualifiedTableName varchar) RET
     LANGUAGE  plpgsql;
 
 
-CREATE OR REPLACE FUNCTION moveTableToDominodeStagingSchema(qualifiedTableName varchar) RETURNS VOID AS $functionBody$
+CREATE OR REPLACE FUNCTION DomiNodeMoveTableToDominodeStagingSchema(qualifiedTableName varchar) RETURNS VOID AS $functionBody$
     -- Move a table from a department's internal schema to the project-wide internal staging schema
     --
     -- Tables in the department's staging schema are only readable by department members, while those
@@ -71,7 +71,7 @@ BEGIN
     schemaName := split_part(qualifiedTableName, '.', 1);
     unqualifiedName := replace(qualifiedTableName, concat(schemaName, '.'), '');
     newQualifiedName := concat('dominode_staging.', format('%s', unqualifiedName));
-    PERFORM setStagingPermissions(qualifiedTableName);
+    PERFORM DomiNodeSetStagingPermissions(qualifiedTableName);
     EXECUTE format('ALTER TABLE %s SET SCHEMA dominode_staging', qualifiedTableName);
     EXECUTE format('GRANT SELECT ON %s TO dominode_user', newQualifiedName);
 
@@ -80,7 +80,7 @@ $functionBody$
     LANGUAGE  plpgsql;
 
 
-CREATE OR REPLACE FUNCTION moveTableToPublicSchema(qualifiedTableName varchar) RETURNS VOID AS $functionBody$
+CREATE OR REPLACE FUNCTION DomiNodeMoveTableToPublicSchema(qualifiedTableName varchar) RETURNS VOID AS $functionBody$
     -- Move a table from a department's internal schema to the public schema
     --
     -- Moved table is renamed and assigned proper permissions.
@@ -111,7 +111,7 @@ CREATE OR REPLACE FUNCTION moveTableToPublicSchema(qualifiedTableName varchar) R
     LANGUAGE  plpgsql;
 
 
-CREATE OR REPLACE FUNCTION copyTableBackToStagingSchema(qualifiedTableName varchar, newTableQualifiedName varchar) RETURNS VOID AS $functionBody$
+CREATE OR REPLACE FUNCTION DomiNodeCopyTableBackToStagingSchema(qualifiedTableName varchar, newTableQualifiedName varchar) RETURNS VOID AS $functionBody$
     -- Make a copy of the input table into the department's staging schema
     --
     -- This function shall be used whenever a table needs to be edited

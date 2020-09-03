@@ -1,6 +1,7 @@
 import enum
 
 
+# TODO: Remove this
 class DepartmentName(enum.Enum):
     PPD = 'ppd'
     LSD = 'lsd'
