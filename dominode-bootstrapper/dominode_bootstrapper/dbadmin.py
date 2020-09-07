@@ -128,7 +128,7 @@ def bootstrap(
 def add_department_user(
         username: str,
         password: str,
-        department: str,
+        departments: typing.List[str],
         role: typing.Optional[UserRole] = UserRole.REGULAR_DEPARTMENT_USER,
         db_admin_username: typing.Optional[str] = config['db']['admin_username'],
         db_admin_password: typing.Optional[str] = config['db']['admin_password'],
@@ -140,21 +140,11 @@ def add_department_user(
         f'postgresql://{db_admin_username}:{db_admin_password}@'
         f'{db_host}:{db_port}/{db_name or db_admin_username}'
     )
-    sql_role = {
-        UserRole.EDITOR: f'{department}_editor',
-        UserRole.REGULAR_DEPARTMENT_USER: f'{department}_user',
-    }[role]
+    role_suffix = 'editor' if role == UserRole.EDITOR else 'user'
+    parent_roles = [f'{dep}_{role_suffix}' for dep in departments]
     with get_db_connection(db_url) as db_connection:
-        create_user(username, password, db_connection, parent_roles=[sql_role])
-        # create_role(
-        #     username,
-        #     db_connection,
-        #     other_options=(
-        #         f'IN ROLE {sql_role}',
-        #         'LOGIN',
-        #         f'PASSWORD \'{password}\''
-        #     )
-        # )
+        create_user(
+            username, password, db_connection, parent_roles=parent_roles)
 
 
 def create_role(
