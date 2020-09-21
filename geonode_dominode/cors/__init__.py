@@ -18,23 +18,5 @@
 #
 #########################################################################
 
-from django.conf.urls import url, include
-from django.views.generic import TemplateView
 
-from geonode.urls import urlpatterns
-from geonode.monitoring import register_url_event
-
-from geonode_dominode.views import GroupDetailView, sync_geoserver
-
-homepage = register_url_event()(TemplateView.as_view(template_name='site_index.html'))
-
-urlpatterns = [
-    url(r'^cors/', include('cors.urls')),
-    url(r'^/?$',
-        homepage,
-        name='home'),
-    url(r'^groups/group/(?P<slug>[-\w]+)/$',
-        GroupDetailView.as_view(), name='group_detail'),
-    url(r'^groups/sync_geoserver/',
-        sync_geoserver, name='sync_geoserver'),
- ] + urlpatterns
+default_app_config = "cors.apps.AppConfig"

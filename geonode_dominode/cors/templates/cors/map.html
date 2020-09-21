@@ -1,0 +1,18 @@
+{% extends 'site_base.html' %}
+{% load i18n avatar_tags staticfiles %}
+
+{% block extra_head %}
+    <link href="{{ STATIC_URL }}cors/js/libs/leaflet/1.5.1/leaflet.css" rel="stylesheet" type="text/css" media="screen, projection"/>
+    <link href="{{ STATIC_URL }}cors/js/libs/leaflet.draw/1.0.4/leaflet.draw.css" rel="stylesheet" type="text/css"/>
+    <link href="{{ STATIC_URL }}css/dominode_base.css" rel="stylesheet"/>
+    <link href="{{ STATIC_URL }}cors/css/map.css" rel="stylesheet"/>
+{% endblock extra_head %}
+{% block middle %}
+    <div id="map">
+
+    </div>
+{% endblock %}
+{% block extra_script %}
+    <script type="text/javascript" src="{{ STATIC_URL }}cors/js/shared.js"></script>
+    <script data-main="{{ STATIC_URL }}cors/js/map/config.js" src="{{ STATIC_URL }}cors/js/libs/require.js/2.3.6/require.min.js"></script>
+{% endblock extra_script %}

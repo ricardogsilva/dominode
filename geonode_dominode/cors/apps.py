@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #########################################################################
 #
-# Copyright (C) 2017 OSGeo
+# Copyright (C) 2018 OSGeo
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,24 +17,15 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 #########################################################################
+from django.apps import AppConfig as BaseAppConfig
+import logging
 
-from django.conf.urls import url, include
-from django.views.generic import TemplateView
+logger = logging.getLogger('cors')
 
-from geonode.urls import urlpatterns
-from geonode.monitoring import register_url_event
 
-from geonode_dominode.views import GroupDetailView, sync_geoserver
+class AppConfig(BaseAppConfig):
+    name = "cors"
+    label = "cors"
 
-homepage = register_url_event()(TemplateView.as_view(template_name='site_index.html'))
-
-urlpatterns = [
-    url(r'^cors/', include('cors.urls')),
-    url(r'^/?$',
-        homepage,
-        name='home'),
-    url(r'^groups/group/(?P<slug>[-\w]+)/$',
-        GroupDetailView.as_view(), name='group_detail'),
-    url(r'^groups/sync_geoserver/',
-        sync_geoserver, name='sync_geoserver'),
- ] + urlpatterns
+    def ready(self):
+        super(AppConfig, self).ready()
