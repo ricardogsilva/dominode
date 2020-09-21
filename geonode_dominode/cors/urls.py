@@ -18,11 +18,25 @@
 #
 #########################################################################
 
-from django.conf.urls import url
+from django.conf.urls import url, include
+from cors.api_view.cors_list import CorsList
+from cors.api_view.cors_detail import CorsDetail, CorsObservationDownload
 from cors.views import MapView
 
+API = [
+    url(r'^list',
+        view=CorsList.as_view(),
+        name='cors-list'),
+    url(r'^(?P<id>\d+)/observation/download',
+        view=CorsObservationDownload.as_view(),
+        name='cors-observation-download'),
+    url(r'^(?P<id>\d+)',
+        view=CorsDetail.as_view(),
+        name='cors-detail')
+]
 urlpatterns = [
     url(r'^map/?$',
         MapView.as_view(),
         name='cors-map'),
+    url(r'^api/', include(API)),
 ]

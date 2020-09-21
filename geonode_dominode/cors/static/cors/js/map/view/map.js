@@ -2,8 +2,9 @@ define([
     'backbone',
     'jquery',
     'view/basemap',
+    'view/layer',
 ], function (
-    Backbone, $, Basemap, System) {
+    Backbone, $, Basemap, Layer) {
     return Backbone.View.extend({
         initBounds: [[15.5257612, -61.833855], [15.3169172, -60.90965]],
         initialize: function () {
@@ -13,6 +14,7 @@ define([
             // constructor
             this.map = L.map('map').fitBounds(this.initBounds);
             new Basemap(this);
+            this.layer = new Layer();
         },
         /**
          * Pan map to lat lng

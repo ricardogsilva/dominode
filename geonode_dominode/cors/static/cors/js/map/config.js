@@ -38,7 +38,8 @@ require([
     'leafletDraw',
     '../request',
     'view/map',
-], function ($, bootstrap, Backbone, _, L, LDraw, _Request, Map) {
+    'view/side-panel',
+], function ($, bootstrap, Backbone, _, L, LDraw, _Request, Map, SidePanel) {
     csrfmiddlewaretoken = $('input[name ="csrfmiddlewaretoken"]').val();
     dispatcher = _.extend({}, Backbone.Events);
     Request = new _Request();
@@ -46,4 +47,5 @@ require([
     // initiate all view
     let mapiew = new Map();
     map = mapiew.map;
+    new SidePanel();
 });

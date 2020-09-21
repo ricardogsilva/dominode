@@ -13,7 +13,7 @@ String.prototype.capitalize = function () {
 }
 
 function beforeAjaxSend(xhr) {
-    xhr.setRequestHeader('X-CSRFToken', token);
+    xhr.setRequestHeader('X-CSRFToken', csrfmiddlewaretoken);
 }
 
 /**
