@@ -30,6 +30,27 @@ class CorsDetail(APIView):
         return JsonResponse(example)
 
 
+class CorsObservationDownloadDetail(APIView):
+    """ Check download detail  """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id, format=None):
+        data = request.data
+        if not request.user.has_perm('cors.download_observation'):
+            return HttpResponseForbidden()
+        try:
+            date_from = datetime.datetime.strptime(data['from'], '%Y-%m-%d')
+            date_to = datetime.datetime.strptime(data['to'], '%Y-%m-%d')
+            if date_from > date_to:
+                return HttpResponseBadRequest('From is larger than to')
+            return JsonResponse({
+                'filesize': '1000MB',
+                'filename': 'test'
+            })
+        except KeyError as e:
+            return HttpResponseBadRequest('{} is required'.format(e))
+
+
 class CorsObservationDownload(APIView):
     """ Download cors observation in date range """
     permission_classes = [IsAuthenticated]

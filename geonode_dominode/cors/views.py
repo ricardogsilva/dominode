@@ -6,4 +6,6 @@ class MapView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['has_download_observation_permission'] = \
+            self.request.user.is_authenticated and self.request.user.has_perm('cors.download_observation')
         return context

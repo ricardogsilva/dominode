@@ -20,13 +20,16 @@
 
 from django.conf.urls import url, include
 from cors.api_view.cors_list import CorsList
-from cors.api_view.cors_detail import CorsDetail, CorsObservationDownload
+from cors.api_view.cors_detail import CorsDetail, CorsObservationDownload, CorsObservationDownloadDetail
 from cors.views import MapView
 
 API = [
     url(r'^list',
         view=CorsList.as_view(),
         name='cors-list'),
+    url(r'^(?P<id>\d+)/observation/download/detail',
+        view=CorsObservationDownloadDetail.as_view(),
+        name='cors-observation-download-detail'),
     url(r'^(?P<id>\d+)/observation/download',
         view=CorsObservationDownload.as_view(),
         name='cors-observation-download'),

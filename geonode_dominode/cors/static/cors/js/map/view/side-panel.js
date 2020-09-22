@@ -14,6 +14,32 @@ define([
 
             // let's reposition side panel
             this.$el.css('right', `-${this.$el.outerWidth()}px`);
+            this.initFormSubmit()
+        },
+        /** initiate form submit **/
+        initFormSubmit: function () {
+            let checkDetail = true
+            this.$observationForm.submit(function (e) {
+                if (checkDetail) {
+                    e.preventDefault();
+                    const $form = $(this);
+                    $.ajax({
+                        url: $(this).attr('action') + '/detail',
+                        type: 'post',
+                        dataType: 'json',
+                        data: $(this).serialize(),
+                        success: function (msg) {
+                            checkDetail = false
+                            $form.submit()
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            alert(XMLHttpRequest.responseText);
+                        }
+                    })
+                } else {
+                    checkDetail = true
+                }
+            });
         },
         /** Render and open side panel  */
         renderAndOpen: function (id, properties) {

@@ -7,7 +7,7 @@
     <link href="{{ STATIC_URL }}css/dominode_base.css" rel="stylesheet"/>
     <link href="{{ STATIC_URL }}cors/css/map.css" rel="stylesheet"/>
     <script>
-        const observationDownloadURL = '{% url 'cors-observation-download' 0%} '
+        const observationDownloadURL = '{% url 'cors-observation-download' 0%}'
     </script>
 {% endblock extra_head %}
 {% block middle %}
@@ -17,7 +17,7 @@
             <table id="feature-properties">
             </table>
         </div>
-        {% if user.is_authenticated %}
+        {% if has_download_observation_permission %}
             <div id="download-section" class="section">
                 <div class="title">Download observation</div>
                 <form id="download-observation" method="post">
