@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 
 class CorsList(APIView):
     """ Return cors list as geojson """
-    authentication_classes = []
     permission_classes = []
 
     def get(self, request, format=None):

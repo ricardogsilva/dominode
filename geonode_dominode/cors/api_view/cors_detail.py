@@ -1,11 +1,13 @@
 import datetime
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import (
+    JsonResponse, HttpResponseBadRequest, HttpResponse, HttpResponseForbidden
+)
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 
 class CorsDetail(APIView):
     """ Return cors detail as json """
-    authentication_classes = []
     permission_classes = []
 
     def get(self, request, id, format=None):
@@ -30,11 +32,12 @@ class CorsDetail(APIView):
 
 class CorsObservationDownload(APIView):
     """ Download cors observation in date range """
-    authentication_classes = []
-    permission_classes = []
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, id, format=None):
         data = request.data
+        if not request.user.has_perm('cors.download_observation'):
+            return HttpResponseForbidden()
         try:
             date_from = datetime.datetime.strptime(data['from'], '%Y-%m-%d')
             date_to = datetime.datetime.strptime(data['to'], '%Y-%m-%d')

@@ -17,21 +17,23 @@
             <table id="feature-properties">
             </table>
         </div>
-        <div id="download-section" class="section">
-            <div class="title">Download observation</div>
-            <form id="download-observation" method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>From</label>
-                    <input type="date" class="form-control" name="from" required>
-                </div>
-                <div class="form-group">
-                    <label>To</label>
-                    <input type="date" class="form-control" name="to" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Download</button>
-            </form>
-        </div>
+        {% if user.is_authenticated %}
+            <div id="download-section" class="section">
+                <div class="title">Download observation</div>
+                <form id="download-observation" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>From</label>
+                        <input type="date" class="form-control" name="from" required>
+                    </div>
+                    <div class="form-group">
+                        <label>To</label>
+                        <input type="date" class="form-control" name="to" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Download</button>
+                </form>
+            </div>
+        {% endif %}
     </div>
 {% endblock %}
 {% block extra_script %}
