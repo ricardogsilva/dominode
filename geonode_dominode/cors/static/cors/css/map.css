@@ -85,3 +85,7 @@ body:not(.home) .navbar {
 #side-panel form button {
     width: 100%;
 }
+
+.g-recaptcha {
+    display: inline-block;
+}
