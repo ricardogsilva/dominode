@@ -1,0 +1,157 @@
+
+
+# Section to be used for NFS Share manifests
+nfsShare:
+  enabled: false
+  server: 192.168.100.6
+  path: /exports/s3data
+  capacity:
+    # Change this according to your available resources
+    storage: 20Gi
+
+mediaShare:
+  enabled: false
+  server: 192.168.100.6
+  path: /exports/s3data/media
+  capacity:
+    # Change this according to your available resources
+    storage: 20Gi
+
+geoserverDataDirShare:
+  enabled: false
+  server: 192.168.100.6
+  path: /exports/s3data/geoserver-data-dir
+  claimName: dominode-geoserver-geoserver-data-dir
+  capacity:
+    # Change this according to your available resources
+    storage: 20Gi
+
+# Section to be used for Minio
+minio:
+  enabled: false
+  global:
+    minio:
+      accessKey: sL3v7E9kXt9I
+      secretKey: c8CEJld609mCy0zZsDmejhJ4VpCnGPuv
+
+  persistence:
+    existingClaim: nfs-share-volume
+
+  ingress:
+    enabled: false
+    annotations:
+      # Annotations to allow huge file upload for nginx ingress
+      nginx.ingress.kubernetes.io/proxy-body-size: 512Gi
+    hosts:
+      - name: minio.local
+        path: /
+
+# Section to be used by Dominode
+dominode:
+  enabled: false
+  geonode:
+    extraPodEnv: |
+      # Commented below is the email settings.
+      # It's deployment-dependent, so it's commented out.
+      #- name: EMAIL_ENABLE
+      #  value: "True"
+      #- name: DJANGO_EMAIL_HOST
+      #  value: "smtp.gmail.com"
+      #- name: DJANGO_EMAIL_PORT
+      #  value: "587"
+      #- name: DJANGO_EMAIL_HOST_USER
+      #  value: "user@gmail.com"
+      #- name: DJANGO_EMAIL_HOST_PASSWORD
+      #  value: "gmail-app-secret"
+      #- name: DJANGO_EMAIL_USE_TLS
+      #  value: "True"
+      #- name: DJANGO_EMAIL_USE_SSL
+      #  value: "False"
+      #- name: DEFAULT_FROM_EMAIL
+      #  value: "Dominode <no-reply@dominode.test>"
+
+    # Volume declarations for GeoNode
+    # This is to mount extra volumes from the NFS shares
+    extraVolumeMounts: |
+      - name: nfs-share
+        mountPath: /share/spatialstore
+        # Note that subPath is the bucket name in Minio in this case
+        subPath: geoserver
+
+    extraVolume: |
+      - name: nfs-share
+        persistentVolumeClaim:
+          claimName: nfs-share-volume
+
+    geoserver:
+      # Volume declarations
+      # This is to mount extra volumes from the NFS shares
+      extraVolume: |
+        - name: config-volume
+          configMap:
+            name: {{ template "geoserver.fullname" . }}
+            defaultMode: 0755
+        {{- if .Values.ingress.tls.enabled }}
+        - name: tls-volume
+          secret:
+            secretName: {{ .Values.ingress.tls.secretName | quote }}
+        {{- end }}
+        - name: nfs-share
+          persistentVolumeClaim:
+            claimName: nfs-share-volume
+
+      extraVolumeMounts: |
+        - mountPath: /docker-entrypoint.sh
+          subPath: docker-entrypoint.sh
+          name: config-volume
+        {{- if .Values.ingress.tls.enabled }}
+        - mountPath: /tmp/tls-secrets/tls.crt
+          subPath: tls.crt
+          name: tls-volume
+        {{- end }}
+        - name: nfs-share
+          mountPath: /share/spatialstore
+          # Note that subPath is the bucket name in Minio in this case
+          subPath: geoserver
+
+    postgis:
+      postgresqlDatabase: dominode_app,dominode
+      postgresqlUsername: dominode
+
+    rabbitmq:
+      auth:
+        # Secret key used by celery async mode.
+        erlangCookie: aliceinwonderland
+        password: alice
+        username: rabbit
+      enabled: true
+
+    ingress:
+      enabled: false
+      host: dominode.test
+
+  # Dominode global section
+  global:
+    # Site name section.
+    # Modify according to chosen host name
+    geonodeSiteName: dominode.test
+    geoserverURL: http://dominode.test/geoserver/
+    # Credentials sections.
+    # This section controls credentials of Dominode stack
+    adminPassword:
+      value: admin
+    adminUser: admin
+    databaseName: dominode_app
+    databasePassword:
+      value: dominode
+    databaseUsername: dominode
+    geodatabaseName: dominode
+    geodatabasePassword:
+      value: dominode
+    geodatabaseUsername: dominode
+    geoserverAdminPassword:
+      value: geoserveradmin
+    # Extras
+    debug: "True"
+    celeryAsync:
+      enabled: true

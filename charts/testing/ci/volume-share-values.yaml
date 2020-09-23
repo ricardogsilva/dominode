@@ -1,0 +1,25 @@
+# Section to be used for NFS Share manifests
+nfsShare:
+  enabled: true
+  server: 192.168.100.6
+  path: /exports/s3data
+  capacity:
+    # Change this according to your available resources
+    storage: 20Gi
+
+mediaShare:
+  enabled: false
+  server: 192.168.100.6
+  path: /exports/s3data/media
+  capacity:
+    # Change this according to your available resources
+    storage: 20Gi
+
+geoserverDataDirShare:
+  enabled: false
+  server: 192.168.100.6
+  path: /exports/s3data/geoserver-data-dir
+  claimName: dominode-geoserver-geoserver-data-dir
+  capacity:
+    # Change this according to your available resources
+    storage: 20Gi

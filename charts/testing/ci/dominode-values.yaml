@@ -1,0 +1,44 @@
+# Section to be used by Dominode
+dominode:
+  enabled: true
+  geonode:
+    postgis:
+      postgresqlDatabase: dominode_app,dominode
+      postgresqlUsername: dominode
+    rabbitmq:
+      auth:
+        # Secret key used by celery async mode.
+        erlangCookie: aliceinwonderland
+        password: alice
+        username: rabbit
+      enabled: true
+
+    ingress:
+      enabled: false
+      host: dominode.test
+
+  # Dominode global section
+  global:
+    # Site name section.
+    # Modify according to chosen host name
+    geonodeSiteName: dominode.test
+    geoserverURL: http://dominode.test/geoserver/
+    # Credentials sections.
+    # This section controls credentials of Dominode stack
+    adminPassword:
+      value: admin
+    adminUser: admin
+    databaseName: dominode_app
+    databasePassword:
+      value: dominode
+    databaseUsername: dominode
+    geodatabaseName: dominode
+    geodatabasePassword:
+      value: dominode
+    geodatabaseUsername: dominode
+    geoserverAdminPassword:
+      value: geoserveradmin
+    # Extras
+    debug: "True"
+    celeryAsync:
+      enabled: true

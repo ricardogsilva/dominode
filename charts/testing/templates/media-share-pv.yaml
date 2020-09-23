@@ -1,0 +1,27 @@
+{{- if .Values.mediaShare.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-media-share
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  - ReadWriteOnce
+  - ReadOnlyMany
+  capacity:
+    storage: {{ .Values.nfsShare.capacity.storage }}
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: media-dir
+    namespace: {{ .Release.Namespace }}
+  nfs:
+    path: {{ .Values.mediaShare.path }}
+    server: {{ .Values.mediaShare.server }}
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+...
+{{- end }}

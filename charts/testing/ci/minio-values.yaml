@@ -1,0 +1,19 @@
+# Section to be used for Minio
+minio:
+  enabled: true
+  global:
+    minio:
+      accessKey: randomstring
+      secretKey: supersecretrandomstring
+
+  persistence:
+    existingClaim: nfs-share-volume
+
+  ingress:
+    enabled: false
+    annotations:
+      # Annotations to allow huge file upload for nginx ingress
+      nginx.ingress.kubernetes.io/proxy-body-size: 512Gi
+    hosts:
+      - name: minio.local
+        path: /

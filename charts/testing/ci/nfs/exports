@@ -1,0 +1,7 @@
+# /etc/exports: the access control list for filesystems which may be exported
+
+# In this example:
+# /exports/s3data is the native (node) folder to share
+# 10.42.0.0/16 is CIDR IP Address of the cluster. In other words, the IP address range of the cluster. It might be different in your k8s distro.
+# 192.168.100.6 is the node real machine IP Address. It is also needed because the route goes from pod to node to other node.
+/exports/s3data		10.42.0.0/16(rw,root_squash,sync,no_subtree_check) 192.168.100.6(rw,root_squash,sync,no_subtree_check)

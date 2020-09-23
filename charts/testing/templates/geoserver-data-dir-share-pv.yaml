@@ -1,0 +1,27 @@
+{{- if .Values.geoserverDataDirShare.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-geoserver-data-dir-share
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  - ReadWriteOnce
+  - ReadOnlyMany
+  capacity:
+    storage: {{ .Values.geoserverDataDirShare.capacity.storage }}
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: {{ .Values.geoserverDataDirShare.claimName }}
+    namespace: {{ .Release.Namespace }}
+  nfs:
+    path: {{ .Values.geoserverDataDirShare.path }}
+    server: {{ .Values.geoserverDataDirShare.server }}
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+...
+{{- end }}

@@ -31,17 +31,22 @@ def run_setup_hooks(*args, **kwargs):
         settings.INSTALLED_APPS += (celeryapp, )
 
     # Create new custom permission model
-    from django.contrib.auth.models import ContentType, Permission
-    from geonode.groups.models import GroupProfile
-    group_content_type = ContentType.objects.get_for_model(GroupProfile)
-    execute_sync_layers_perm, created = Permission.objects.get_or_create(
-        codename='can_sync_geoserver',
-        name='Can sync GeoServer',
-        content_type=group_content_type
-    )
-    if created:
-        logger.info('Created new permission: {}'.format(
-            execute_sync_layers_perm))
+    try:
+        from django.contrib.auth.models import ContentType, Permission
+        from geonode.groups.models import GroupProfile
+        group_content_type = ContentType.objects.get_for_model(GroupProfile)
+        execute_sync_layers_perm, created = Permission.objects.get_or_create(
+            codename='can_sync_geoserver',
+            name='Can sync GeoServer',
+            content_type=group_content_type
+        )
+        if created:
+            logger.info('Created new permission: {}'.format(
+                execute_sync_layers_perm))
+    except BaseException:
+        # The content type initialization must run after first database
+        # initializations.
+        pass
 
 
 class AppConfig(BaseAppConfig):

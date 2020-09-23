@@ -1,0 +1,46 @@
+# the folder for spatial datastore must map to the NFS share
+# minio should use the corresponding folder to serve via minio/s3 request
+# geoserver must use the datastore (read only?) for the designated datastore folder only
+{{- if .Values.nfsShare.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-share
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  - ReadWriteOnce
+  - ReadOnlyMany
+  capacity:
+    storage: {{ .Values.nfsShare.capacity.storage }}
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: nfs-share-volume
+    namespace: {{ .Release.Namespace }}
+  nfs:
+    path: {{ .Values.nfsShare.path }}
+    server: {{ .Values.nfsShare.server }}
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+...
+# This volume claim should be used both in minio and geoserver
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-share-volume
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  resources:
+    requests:
+      storage: {{ .Values.nfsShare.capacity.storage }}
+  accessModes:
+  - ReadWriteMany
+...
+{{- end }}

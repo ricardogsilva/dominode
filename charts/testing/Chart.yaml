@@ -1,0 +1,18 @@
+apiVersion: v2
+name: testing
+version: 0.1
+appVersion: 1.0.0
+description: Chart for dominode testing infra
+maintainers:
+  - name: lucernae
+    email: lana.pcfre@gmail.com
+engine: gotpl
+dependencies:
+  - name: minio
+    version: 3.7.8
+    repository: https://charts.bitnami.com/bitnami
+    condition: minio.enabled
+  - name: dominode
+    version: 0.1
+    repository: file://../dominode
+    condition: dominode.enabled
