@@ -155,3 +155,32 @@ dominode:
     debug: "True"
     celeryAsync:
       enabled: true
+
+# Section for bootstrapper
+bootstrapper:
+  enabled: false
+  image: kartoza/dominode_bootstrapper:0.2.0
+  config: |
+    [db]
+    admin_username: {{ .Values.dominode.geonode.global.geodatabaseUsername }}
+    admin_password: {{ .Values.dominode.geonode.global.geodatabasePassword.value }}
+    name: {{ .Values.dominode.geonode.global.geodatabaseName }}
+    host: dominode-geonode-geodatabase
+    port: {{ .Values.dominode.geonode.global.geodatabasePort }}
+
+    [minio]
+    admin_access_key: {{ .Values.minio.global.minio.accessKey }}
+    admin_secret_key: {{ .Values.minio.global.minio.secretKey }}
+    host: minio
+    port: {{ .Values.minio.service.port }}
+    protocol: http
+
+    [geonode]
+    base_url: http://dominode-geonode
+    admin_username: {{ .Values.dominode.geonode.global.adminUser }}
+    admin_password: {{ .Values.dominode.geonode.global.adminPassword.value }}
+
+    [geoserver]
+    base_url: http://dominode-geonode-geoserver/geoserver
+    admin_username: {{ .Values.dominode.geonode.global.geoserverAdminUser }}
+    admin_password: {{ .Values.dominode.geonode.global.geoserverAdminPassword.value }}

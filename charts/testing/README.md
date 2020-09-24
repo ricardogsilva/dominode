@@ -198,6 +198,44 @@ All the volumes should be bound after you finished installing Dominode helm char
 
 We run the bootstrap commands either using k8s job manifests or via helm charts.
 
-TO BE DEFINED LATER
+Copy [ci/bootstrapper-values.yaml](ci/bootstrapper-values.yaml) and modify it to your cluster/nodes. The file only have relevant sections for this phase.
 
-But the general idea will be an extra values file again that describes just the bootstrapping steps.
+Store the modified values file wherever you like, but we are going to assume it's saved in `bootstrapper-values.yaml`
+
+The values that you will change are typically the bootstrapper config file, in the form of INI format.
+You can either use Helm template to use existing helm values, or you can hardcode the config directly in the values file.
+
+Execute to generate the manifests:
+
+```
+helm install bootstrapper . -f bootstrapper-values.yaml
+```
+
+Now, since k8s job currently works in such a way that it doesn't clean by itself when it is completed, you can't edit 
+the bootstrapper release using `helm upgrade` if in the future you modify the values file or charts.
+Instead, you need to delete the release and install it again, like this:
+
+```
+helm uninstall bootstrapper
+helm install bootstrapper . -f bootstrapper-values.yaml
+```
+
+Once the resources are declared, the k8s job will control the pod and restart it if the job failed.
+You can check the completion of the job by running:
+
+```
+kubectl get job dominode-bootstrapper 
+```
+
+If it completes, the column COMPLETIONS should indicate 1/1.
+Alternatively, you can check the status in detail by using `kubectl describe`
+
+```
+kubectl describe job dominode-bootstrapper
+```
+
+If it describes **Job completed** in the Events sections, then the job has completed.
+
+You can delete or let the completed Job resource in the cluster. 
+Either way is fine if you prefer to keep the logs. But completed jobs can't be restarted. 
+You need to uninstall the release and install it again if you want to rerun the job.

@@ -1,0 +1,35 @@
+{{- if .Values.bootstrapper.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dominode-bootstrapper
+spec:
+  template:
+    spec:
+      containers:
+      - name: dominode-bootstrapper
+        image: {{ .Values.bootstrapper.image }}
+        args:
+          - bootstrap
+        volumeMounts:
+          - mountPath: /etc/dominode
+            name: bootstrapper-conf
+      volumes:
+        - name: bootstrapper-conf
+          secret:
+            secretName: dominode-bootstrapper-config
+      restartPolicy: OnFailure
+...
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dominode-bootstrapper-config
+  labels:
+    release: {{ .Release.Name }}
+stringData:
+  dominode-bootstrapper.conf: |
+    {{ (tpl .Values.bootstrapper.config $) | nindent 4 }}
+...
+{{- end }}
