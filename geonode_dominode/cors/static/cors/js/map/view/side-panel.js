@@ -28,7 +28,8 @@ define([
                         type: 'post',
                         dataType: 'json',
                         data: $(this).serialize(),
-                        success: function (msg) {
+                        success: function (data) {
+                            console.log(data)
                             checkDetail = false
                             $form.submit()
                         },

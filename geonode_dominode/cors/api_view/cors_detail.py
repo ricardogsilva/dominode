@@ -1,33 +1,12 @@
 import datetime
+import os
 from django.http import (
     JsonResponse, HttpResponseBadRequest, HttpResponse, HttpResponseForbidden
 )
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-
-
-class CorsDetail(APIView):
-    """ Return cors detail as json """
-    permission_classes = []
-
-    def get(self, request, id, format=None):
-        example = {
-            "type": "Feature",
-            "id": 1,
-            "properties": {
-                "ID": 1,
-                "Status": "Operational",
-                "Sampling Rate": "30 sec(s)",
-                "Availability": "Hourly",
-                "GNSS": "GPS+GLO",
-                "Agency": "Institut Geographique National - France"
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [-61.388993, 15.2997062]
-            }
-        }
-        return JsonResponse(example)
+from cors.models.station import CORSStation
 
 
 class CorsObservationDownloadDetail(APIView):
@@ -36,6 +15,7 @@ class CorsObservationDownloadDetail(APIView):
 
     def post(self, request, id, format=None):
         data = request.data
+        station = get_object_or_404(CORSStation, id=id)
         if not request.user.has_perm('cors.download_observation'):
             return HttpResponseForbidden()
         try:
@@ -44,8 +24,8 @@ class CorsObservationDownloadDetail(APIView):
             if date_from > date_to:
                 return HttpResponseBadRequest('From is larger than to')
             return JsonResponse({
-                'filesize': '1000MB',
-                'filename': 'test'
+                'filesize': station.indexes_size(date_from, date_to),
+                'filename': station.indexes_in_zip_filename(date_from, date_to)
             })
         except KeyError as e:
             return HttpResponseBadRequest('{} is required'.format(e))
@@ -57,6 +37,7 @@ class CorsObservationDownload(APIView):
 
     def post(self, request, id, format=None):
         data = request.data
+        station = get_object_or_404(CORSStation, id=id)
         if not request.user.has_perm('cors.download_observation'):
             return HttpResponseForbidden()
         try:
@@ -64,12 +45,10 @@ class CorsObservationDownload(APIView):
             date_to = datetime.datetime.strptime(data['to'], '%Y-%m-%d')
             if date_from > date_to:
                 return HttpResponseBadRequest('From is larger than to')
-
-            # download
-            # Create and return response with created pdf
-            response = HttpResponse('OK')
-            response['Content-Type'] = 'application/pdf'
-            response['Content-disposition'] = 'attachment ; filename = {}'.format('test')
-            return response
+            path = station.indexes_in_zip(date_from, date_to)
+            with open(path, 'rb') as zip_file:
+                response = HttpResponse(zip_file.read(), content_type="application/zip")
+                response['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(path)
+                return response
         except KeyError as e:
             return HttpResponseBadRequest('{} is required'.format(e))

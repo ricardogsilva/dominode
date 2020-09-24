@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
+from cors.models.station import CORSStation
 
 
 class CorsList(APIView):
@@ -12,17 +13,14 @@ class CorsList(APIView):
             "features": [{
                 "type": "Feature",
                 "properties": {
-                    "ID": 1,
-                    "Status": "Operational",
-                    "Sampling Rate": "30 sec(s)",
-                    "Availability": "Hourly",
-                    "GNSS": "GPS+GLO",
-                    "Agency": "Institut Geographique National - France"
+                    "ID": station.id,
+                    "Name": station.name,
+                    "Elevation": station.z,
                 },
                 "geometry": {
                     "type": "Point",
-                    "coordinates": [-61.388993, 15.2997062]
+                    "coordinates": [station.y, station.x]
                 }
-            }]
+            } for station in CORSStation.objects.all()]
         }
         return JsonResponse(example)
