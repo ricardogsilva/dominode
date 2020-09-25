@@ -1,0 +1,33 @@
+{% extends "geonode_base.html" %}
+{% load i18n %}
+
+{% block body_outer %}
+    <div class="page-header">
+        <a href="{% url 'dominode-resource-detail' resource.pk %}" class="btn btn-primary pull-right">{% trans "Back to resource details" %}</a>
+        <h2 class="page-title">{% trans "Validation reports" %} <small>{{ resource.name }}</small></h2>
+    </div>
+    <div class="list-group">
+        {% for report in validation_reports %}
+            <a href="{% url 'validation-report-detail' report.pk %}" class="list-group-item">
+                {{ report.result }}
+            </a>
+        {% endfor %}
+    </div>
+    {% if is_paginated %}
+        <div class="pagination">
+            <span>
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+{% endblock %}

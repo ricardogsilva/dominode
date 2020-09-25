@@ -1,0 +1,15 @@
+{% extends "geonode_base.html" %}
+{% load i18n %}
+
+{% block body_outer %}
+    <div class="page-header">
+        <div class="pull-right">
+            <a href="{% url 'validation-report-list' report.resource.pk %}" class="btn btn-primary">{% trans "Back to reports list" %}</a>
+            <a href="{% url 'dominode-resource-detail' report.resource.pk %}" class="btn btn-primary">{% trans "Back to resource details" %}</a>
+        </div>
+        <h2 class="page-title">{{ report.result }}</h2>
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">{{ report.validator }}</li>
+    </ul>
+{% endblock %}
