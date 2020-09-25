@@ -3,18 +3,24 @@ import typing
 
 from django.db import models
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 
 
 class DominodeResource(models.Model):
-
-    class ResourceType(models.TextChoices):
-        DATASET = ('dataset', _('Dataset'))
-        DATASET_COLLECTION = ('dataset_collection', _('Dataset collection'))
-        QGIS_STYLE = ('qgis_style', _('QGIS style'))
-        SLD_STYLE = ('sld_style', _('SLD style'))
-        METADATA_RECORD = ('metadata_record', _('Metadata'))
+    DATASET = 'dataset'
+    DATASET_COLLECTION = 'dataset_collection'
+    QGIS_STYLE = 'qgis_style'
+    SLD_STYLE = 'sld_style'
+    METADATA_RECORD = 'metadata_record'
+    RESOURCE_TYPE_CHOICES = [
+        (DATASET, _('Dataset')),
+        (DATASET_COLLECTION, _('Dataset collection')),
+        (QGIS_STYLE, _('QGIS style')),
+        (SLD_STYLE, _('SLD style')),
+        (METADATA_RECORD, _('Metadata')),
+    ]
 
     name = models.CharField(
         max_length=255,
@@ -22,8 +28,8 @@ class DominodeResource(models.Model):
     )
     resource_type = models.CharField(
         max_length=30,
-        choices=ResourceType.choices,
-        default=ResourceType.DATASET
+        choices=RESOURCE_TYPE_CHOICES,
+        default=DATASET
     )
 
     def __str__(self):
@@ -53,7 +59,7 @@ class ValidationReport(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
-    report = models.JSONField(encoder=DjangoJSONEncoder, default=dict)
+    report = JSONField(encoder=DjangoJSONEncoder, default=dict)
 
     def __str__(self):
         return (

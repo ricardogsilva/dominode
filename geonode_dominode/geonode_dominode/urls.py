@@ -18,14 +18,14 @@
 #
 #########################################################################
 
-from django.conf.urls import url, include
-from django.views.generic import TemplateView
-
-from geonode.urls import (
+from django.urls import (
     include,
     path,
-    urlpatterns,
 )
+from django.conf.urls import url
+from django.views.generic import TemplateView
+
+from geonode.urls import urlpatterns
 from geonode.monitoring import register_url_event
 
 from geonode_dominode.views import GroupDetailView, sync_geoserver
