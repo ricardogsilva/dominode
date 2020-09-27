@@ -55,15 +55,15 @@
       {% if can_view %}
       <li class="list-group-item"><a href="{% url "group_activity" object.slug %}">{% trans "Group Activities" %}</a></li>
       {% endif %}
-      {% if perms.groups.can_sync_geoserver %}
-      <li class="list-group-item">
-        <form action="{% url "sync_geoserver" %}" method=post>
-          {% csrf_token %}
-          <input type="hidden" name="group-slug" value="{{ object.slug }}" />
-          <input type="hidden" name="redirect" value="{{ request.path }}" />
-          <input type="submit" class="btn btn-primary" value="{% trans "Sync GeoServer" %}" />
-        </form>
-      </li>
+      {% if is_member and perms.groups.can_sync_geoserver %}
+          <li class="list-group-item">
+            <form action="{% url "sync_geoserver" %}" method=post>
+              {% csrf_token %}
+              <input type="hidden" name="group-slug" value="{{ object.slug }}" />
+              <input type="hidden" name="redirect" value="{{ request.path }}" />
+              <input type="submit" class="btn btn-primary" value="{% trans "Sync new GeoServer layers" %}" />
+            </form>
+          </li>
       {% endif %}
       <li class="list-group-item">
         <h4>{% trans "Permissions" %}</h4>

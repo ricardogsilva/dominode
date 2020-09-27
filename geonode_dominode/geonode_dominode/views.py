@@ -1,9 +1,18 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import permission_required, login_required
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
-from geonode.groups import views
+from django.contrib.auth.models import Group
+from django.contrib.auth.decorators import (
+    login_required,
+    permission_required,
+)
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseNotAllowed,
+    HttpResponseRedirect,
+)
+from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_lazy as _
+from geonode.groups import views
 
 import logging
 
@@ -30,10 +39,13 @@ def sync_geoserver(request):
     :type request: django.http.HttpRequest
     """
     if request.method == 'POST':
+        user = request.user.get_username()
         group_slug = request.POST.get('group-slug')
+        current_group = get_object_or_404(Group, name=group_slug)
+        if not user.is_member_of_group(current_group):
+            return HttpResponseNotAllowed()
         workspace_name = group_slug.replace('-editor', '')
         redirect = request.POST.get('redirect')
-        user = request.user.get_username()
         logger.debug('Receiving GeoServer sync requests.')
         logger.debug('Group name: {}'.format(group_slug))
         logger.debug('Workspace name: {}'.format(workspace_name))
