@@ -10,16 +10,29 @@ from django.utils.translation import gettext_lazy as _
 
 class DominodeResource(models.Model):
     DATASET = 'dataset'
-    DATASET_COLLECTION = 'dataset_collection'
-    QGIS_STYLE = 'qgis_style'
-    SLD_STYLE = 'sld_style'
     METADATA_RECORD = 'metadata_record'
-    RESOURCE_TYPE_CHOICES = [
+    STYLE = 'style'
+    OTHER_ARTIFACT_TYPE = 'other_artifact_type'
+
+    ARTIFACT_TYPE_CHOICES = [
         (DATASET, _('Dataset')),
-        (DATASET_COLLECTION, _('Dataset collection')),
-        (QGIS_STYLE, _('QGIS style')),
-        (SLD_STYLE, _('SLD style')),
         (METADATA_RECORD, _('Metadata')),
+        (STYLE, _('Style')),
+        (OTHER_ARTIFACT_TYPE, _('Other')),
+    ]
+
+    DOCUMENT = 'document'
+    RASTER = 'raster'
+    VECTOR = 'vector'
+    COLLECTION = 'collection'
+    OTHER_RESOURCE_TYPE = 'other_resource_type'
+
+    RESOURCE_TYPE_CHOICES = [
+        (DOCUMENT, _('Document')),
+        (RASTER, _('Raster')),
+        (VECTOR, _('Vector')),
+        (COLLECTION, _('Collection')),
+        (OTHER_RESOURCE_TYPE, _('Other')),
     ]
 
     name = models.CharField(
@@ -29,6 +42,11 @@ class DominodeResource(models.Model):
     resource_type = models.CharField(
         max_length=30,
         choices=RESOURCE_TYPE_CHOICES,
+        default=VECTOR
+    )
+    artifact_type = models.CharField(
+        max_length=30,
+        choices=ARTIFACT_TYPE_CHOICES,
         default=DATASET
     )
 
@@ -59,7 +77,10 @@ class ValidationReport(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
-    report = JSONField(encoder=DjangoJSONEncoder, default=dict)
+    validation_datetime = models.DateTimeField()
+    checklist_name = models.CharField(max_length=255)
+    checklist_description = models.TextField()
+    checklist_steps = JSONField(encoder=DjangoJSONEncoder, default=list)
 
     def __str__(self):
         return (

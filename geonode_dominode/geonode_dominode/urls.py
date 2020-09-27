@@ -42,5 +42,5 @@ urlpatterns = [
         name='group_detail'
     ),
     url(r'^groups/sync_geoserver/', sync_geoserver, name='sync_geoserver'),
-    path('dominode_validation/', include(dominode_validation_urls)),
+    path('dominode-validation/', include(dominode_validation_urls)),
  ] + urlpatterns

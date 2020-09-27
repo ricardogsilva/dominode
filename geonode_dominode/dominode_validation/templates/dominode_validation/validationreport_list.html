@@ -9,7 +9,8 @@
     <div class="list-group">
         {% for report in validation_reports %}
             <a href="{% url 'validation-report-detail' report.pk %}" class="list-group-item">
-                {{ report.result }}
+                <span class="label {% if report.result %}label-success{% else %}label-danger{% endif %} pull-right">{% if report.result %}{% trans "Valid" %}{% else %}{% trans "Invalid" %}{% endif %}</span>
+                {{ report.created }}
             </a>
         {% endfor %}
     </div>

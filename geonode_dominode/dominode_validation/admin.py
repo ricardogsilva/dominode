@@ -25,11 +25,13 @@ class DominodeResourceAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'resource_type',
+        'artifact_type',
         'is_valid',
         'last_validated',
     )
     list_filter = (
         'resource_type',
+        'artifact_type',
     )
     search_fields = (
         'name',

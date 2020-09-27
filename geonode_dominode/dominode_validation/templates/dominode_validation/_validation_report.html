@@ -1,0 +1,22 @@
+{% load i18n %}
+<p><strong>{% trans "Valid" %}:</strong> {{ report.result }}</p>
+<p><strong>{% trans "Validator" %}:</strong> {{ report.validator.username }}</p>
+<p><strong>{% trans "Validated at" %}:</strong> {{ report.created }}</p>
+<hr>
+<h3 class="title">{{ report.checklist_name }}</h3>
+<p>{{ report.checklist_description }}</p>
+<p>{% trans "Checklist steps" %}:</p>
+<div class="list-group">
+    {% for step in report.checklist_steps %}
+        <div href="#" class="list-group-item">
+            <span class="label {% if step.validated %} label-success{% else %}label-danger{% endif %} pull-right">{% if step.validated %}{% trans "Valid" %}{% else %}{% trans "Invalid" %}{% endif %}</span>
+            <h4 class="list-group-item-heading">{{ step.name }}</h4>
+            <p class="list-group-item-text">
+                {{ step.description }}
+                <br>
+                <br>
+                {{ step.notes }}
+            </p>
+        </div>
+    {% endfor%}
+</div>

@@ -12,11 +12,22 @@ from django.test import TestCase
 #
 # use django authentication for the api requests
 
+# sample POST request to `/dominode-validaton/api/dominode-resources/`
+#
+# {
+#     "name": "ppd_roads_v1.0.0",
+#     "resource_type": "vector",
+#     "artifact_type": "dataset"
+# }
+
 # sample POST request to `/dominode-validaton/api/validation-reports/`
 #
 # {
 #     "resource": "ppd_roads_v1.0.0",
 #     "result": true,
-#     "report": {},
-#     "validator": "admin"
+#     "validator": "admin",
+#     "validation_datetime": "2020-09-22T00:00:04",
+#     "checklist_name": "dummy",
+#     "checklist_description": "my fake checklist",
+#     "checklist_steos": null
 # }
