@@ -1,0 +1,37 @@
+{% extends "geonode_base.html" %}
+{% load i18n %}
+
+{% block body_outer %}
+    <div class="page-header">
+        <a href="{% url 'dominode-resource-list' %}" class="btn btn-primary pull-right">{% trans "Back to resource list" %}</a>
+        <h2 class="page-title">{{ resource.name }} <small>DomiNode resource</small></h2>
+    </div>
+    <div class="list-group">
+        <a class="list-group-item {% if resource.is_valid %}list-group-item-success{% else %}list-group-item-danger{% endif %}"><strong>{% trans "Valid" %}:</strong> {{ resource.is_valid }}</a>
+        <a class="list-group-item"><strong>{% trans "Artifact Type" %}:</strong> {{ resource.artifact_type|capfirst }}</a>
+        <a class="list-group-item"><strong>{% trans "Resource Type" %}:</strong> {{ resource.resource_type|capfirst }}</a>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Latest Validation Report</h3>
+        </div>
+        <div class="panel-body">
+            {% include "./_validation_report.html" with report=latest_report only %}
+        </div>
+    </div>
+    {% if other_recent_reports|length > 0 %}
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                {% if show_all_reports %}
+                    <a  class="btn btn-default pull-right" href="{%  url 'validation-report-list' resource.pk %}">{% trans "See all reports" %}</a>
+                {% endif %}
+                <h3 class="panel-title">{% trans "Other recent validation reports" %}</h3>
+            </div>
+            <div class="list-group">
+                {% for report in other_recent_reports %}
+                    <a class="list-group-item" href="{% url 'validation-report-detail' report.pk %}">{{ report.created }} - {{ report.validator }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

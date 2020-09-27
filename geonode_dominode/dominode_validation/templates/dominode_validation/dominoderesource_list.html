@@ -1,0 +1,42 @@
+{% extends "geonode_base.html" %}
+{% load i18n %}
+
+{% block body_outer %}
+    <div class="page-header">
+        <h2 class="page-title">{% trans "DomiNode resources" %}</h2>
+    </div>
+    <div>
+        <p{% blocktrans %}>
+            These resources have been formally validated by DomiNode departments.
+        {% endblocktrans %}</p>
+    </div>
+        <div class="list-group">
+            {% for resource in dominode_resources %}
+                <a href="{% url 'dominode-resource-detail' resource.pk %}" class="list-group-item">
+                    {{ resource.name }}
+                    <span class="pull-right">
+                        <span class="label label-default">{{ resource.resource_type }}</span>
+                        <span class="label label-default">{{ resource.artifact_type }}</span>
+                        <span class="label {% if resource.is_valid %}label-success{% else %}label-danger{% endif %}">{% if resource.is_valid %}Valid{% else %}Invalid{% endif %}</span>
+                    </span>
+                </a>
+            {% endfor %}
+        </div>
+    {% if is_paginated %}
+        <div class="pagination">
+            <span>
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+{% endblock %}
