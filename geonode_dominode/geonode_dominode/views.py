@@ -1,10 +1,12 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import (
     login_required,
     permission_required,
 )
+from django.contrib.auth.models import Group
 from django.http import (
     HttpResponseBadRequest,
     HttpResponseNotAllowed,
@@ -13,8 +15,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_lazy as _
 from geonode.groups import views
-
-import logging
+from geonode.groups.models import GroupProfile
 
 from geonode_dominode.tasks import task_sync_geoserver
 
@@ -30,6 +31,26 @@ class GroupDetailView(views.GroupDetailView):
     template_name = "groups/group_detail_override.html"
     paginate_by = None
     group = None
+
+    def get_context_data(self, **kwargs):
+        # data structure so the permission check is similar with django
+        # template:
+        # group_permissions.app_label.perm_codename will return true if
+        # the this currently inspected group object has this permission.
+        group_permissions = {
+            p.content_type.app_label: {p.codename: True}
+            for p in self.group.group.permissions.all()
+            if p.content_type and p.content_type.app_label and p.codename
+        }
+        context = super(GroupDetailView, self).get_context_data(**kwargs)
+        context.update({'group_permissions': group_permissions})
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.group = get_object_or_404(
+            GroupProfile, slug=kwargs.get('slug'))
+        response = super(GroupDetailView, self).get(request, *args, **kwargs)
+        return response
 
 
 @login_required
