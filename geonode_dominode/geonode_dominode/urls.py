@@ -28,8 +28,13 @@ from django.views.generic import TemplateView
 from geonode.urls import urlpatterns
 from geonode.monitoring import register_url_event
 
-from geonode_dominode.views import GroupDetailView, sync_geoserver
+#from geonode_dominode.views import GroupDetailView, sync_geoserver
 from dominode_validation import urls as dominode_validation_urls
+
+from .views import (
+    GroupDetailView,
+    sync_geoserver,
+)
 
 homepage = register_url_event()(TemplateView.as_view(
     template_name='site_index.html'))
@@ -41,6 +46,10 @@ urlpatterns = [
         GroupDetailView.as_view(),
         name='group_detail'
     ),
-    url(r'^groups/sync_geoserver/', sync_geoserver, name='sync_geoserver'),
+    path(
+        'groups/group/<slug:group_slug>/sync_geoserver/',
+        sync_geoserver,
+        name='sync_geoserver'
+    ),
     path('dominode-validation/', include(dominode_validation_urls)),
  ] + urlpatterns

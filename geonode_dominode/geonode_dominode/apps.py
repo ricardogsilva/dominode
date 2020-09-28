@@ -1,27 +1,9 @@
-# -*- coding: utf-8 -*-
-#########################################################################
-#
-# Copyright (C) 2018 OSGeo
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-#
-#########################################################################
 from django.apps import AppConfig as BaseAppConfig
 import logging
 
+from .constants import GEOSERVER_SYNC_PERM_CODE
 
-logger = logging.getLogger('geonode_dominode')
+logger = logging.getLogger(__name__)
 
 
 def run_setup_hooks(*args, **kwargs):
@@ -29,23 +11,10 @@ def run_setup_hooks(*args, **kwargs):
     from .celeryapp import app as celeryapp
     if celeryapp not in settings.INSTALLED_APPS:
         settings.INSTALLED_APPS += (celeryapp, )
-
-    # Create new custom permission model
     try:
-        from django.contrib.auth.models import ContentType, Permission
-        from geonode.groups.models import GroupProfile
-        group_content_type = ContentType.objects.get_for_model(GroupProfile)
-        execute_sync_layers_perm, created = Permission.objects.get_or_create(
-            codename='can_sync_geoserver',
-            name='Can sync GeoServer',
-            content_type=group_content_type
-        )
-        if created:
-            logger.info('Created new permission: {}'.format(
-                execute_sync_layers_perm))
+        create_geoserver_sync_permission()
     except BaseException:
-        # The content type initialization must run after first database
-        # initializations.
+        # content type initialization must run after first db initializations
         pass
 
 
@@ -57,4 +26,18 @@ class AppConfig(BaseAppConfig):
     def ready(self):
         super(AppConfig, self).ready()
         run_setup_hooks()
+        from . import signals
 
+
+def create_geoserver_sync_permission():
+    from django.contrib.auth.models import ContentType, Permission
+    from geonode.groups.models import GroupProfile
+    group_content_type = ContentType.objects.get_for_model(GroupProfile)
+    perm, created = Permission.objects.get_or_create(
+        codename=GEOSERVER_SYNC_PERM_CODE,
+        name='Can sync GeoServer',
+        content_type=group_content_type
+    )
+    if created:
+        logger.info(f'Created new permission: {perm}')
+    return perm

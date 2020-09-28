@@ -1,60 +1,59 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.auth.decorators import (
-    login_required,
-    permission_required,
-)
 from django.http import (
     HttpResponseBadRequest,
-    HttpResponseNotAllowed,
     HttpResponseRedirect,
 )
-from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_lazy as _
+from django.views.decorators.http import require_POST
 from geonode.groups import views
-
-import logging
+from geonode.groups.models import GroupProfile
+from guardian.decorators import permission_required_or_403
 
 from geonode_dominode.tasks import task_sync_geoserver
+from .constants import (
+    GEOSERVER_SYNC_PERM_CODE,
+)
 
+DEPARTMENT_GROUP_PROFILE_SUFFIX = '-editor'
 logger = logging.getLogger('geonode_dominode')
 
 
 class GroupDetailView(views.GroupDetailView):
-    """
-    Mixes a detail view (the group) with a ListView (the members).
-    """
+    """Mixes a detail view (the group) with a ListView (the members)."""
 
-    model = get_user_model()
+    # model = get_user_model()
     template_name = "groups/group_detail_override.html"
-    paginate_by = None
-    group = None
+    # paginate_by = None
+    # group = None
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'geoserver_sync_perm_name': GEOSERVER_SYNC_PERM_CODE,
+            'is_department_group_profile': self.group.title.endswith(
+                DEPARTMENT_GROUP_PROFILE_SUFFIX)
+        })
+        return ctx
 
 
-@login_required
-@permission_required('groups.can_sync_geoserver')
-def sync_geoserver(request):
-    """
-    :type request: django.http.HttpRequest
-    """
-    if request.method == 'POST':
-        user = request.user.get_username()
-        group_slug = request.POST.get('group-slug')
-        current_group = get_object_or_404(Group, name=group_slug)
-        if not user.is_member_of_group(current_group):
-            return HttpResponseNotAllowed()
-        workspace_name = group_slug.replace('-editor', '')
-        redirect = request.POST.get('redirect')
-        logger.debug('Receiving GeoServer sync requests.')
-        logger.debug('Group name: {}'.format(group_slug))
-        logger.debug('Workspace name: {}'.format(workspace_name))
-        logger.debug('User name: {}'.format(user))
-        task_sync_geoserver.delay(workspace_name, user)
-        messages.success(
-            request, _(
-                'GeoServer layers are being synced in the background. '
-                'This process may take a while to complete. '
-                'You will be notified via email when it is done.'))
-        return HttpResponseRedirect(redirect_to=redirect)
-    return HttpResponseBadRequest()
+@permission_required_or_403(
+    f'groups.{GEOSERVER_SYNC_PERM_CODE}',
+    (GroupProfile, 'title', 'group_slug')
+)
+@require_POST
+def sync_geoserver(request, group_slug: str):
+    workspace_name = group_slug.replace(DEPARTMENT_GROUP_PROFILE_SUFFIX, '')
+    redirect = request.POST.get('redirect')
+    logger.debug(f'Workspace name: {workspace_name}')
+    logger.info(f'Would now send the geoserver sync task to the queue')
+    # task_sync_geoserver.delay(workspace_name, request.user.get_username())
+    messages.success(
+        request, _(
+            'GeoServer layers are being synced in the background. '
+            'This process may take a while to complete. '
+            'You will be notified via email when it is done.'))
+    return HttpResponseRedirect(redirect_to=redirect)
