@@ -55,7 +55,7 @@
       {% if can_view %}
       <li class="list-group-item"><a href="{% url "group_activity" object.slug %}">{% trans "Group Activities" %}</a></li>
       {% endif %}
-      {% if is_member and perms.groups.can_sync_geoserver %}
+      {% if is_member and group_permissions.groups.can_sync_geoserver %}
           <li class="list-group-item">
             <form action="{% url "sync_geoserver" %}" method=post>
               {% csrf_token %}
