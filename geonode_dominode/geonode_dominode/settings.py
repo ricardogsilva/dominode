@@ -75,6 +75,7 @@ LANGUAGE_CODE = os.getenv('LANGUAGE_CODE', "en")
 
 INSTALLED_APPS += (
     'dominode_validation.apps.DominodeValidationConfig',
+    'geonode_dominode.apps.AppConfig',
     'rest_framework',
     # 'django_filters',
     'django_json_widget',
@@ -97,8 +98,8 @@ REST_FRAMEWORK = {
     ]
 }
 
-if PROJECT_NAME not in INSTALLED_APPS:
-    INSTALLED_APPS += (PROJECT_NAME,)
+# if PROJECT_NAME not in INSTALLED_APPS:
+#     INSTALLED_APPS += (PROJECT_NAME,)
 
 # Location of url mappings
 ROOT_URLCONF = os.getenv('ROOT_URLCONF', '{}.urls'.format(PROJECT_NAME))

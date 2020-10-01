@@ -1,0 +1,1 @@
+GEOSERVER_SYNC_PERM_CODE = 'can_sync_geoserver'
