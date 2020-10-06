@@ -95,6 +95,10 @@ Navigation
     	margin-left: 70px;
 }
 
+.high-index{
+	z-index: 2000;
+}
+
 body:not(.home) .navbar 	{
 	box-shadow: 0 2px 4px #666;
 }
