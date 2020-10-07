@@ -74,6 +74,7 @@ WSGI_APPLICATION = "{}.wsgi.application".format(PROJECT_NAME)
 LANGUAGE_CODE = os.getenv('LANGUAGE_CODE', "en")
 
 INSTALLED_APPS += (
+    'dominode_pygeoapi.apps.DominodePygeoapiConfig',
     'dominode_validation.apps.DominodeValidationConfig',
     'geonode_dominode.apps.AppConfig',
     'rest_framework',
@@ -204,3 +205,87 @@ CELERY_TASK_QUEUES += (
 
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
+
+PYGEOAPI_CONFIG = {
+    'server': {
+        'bind': {
+            'host': '',
+            'port': 5000,
+        },
+        'url': '',
+        'mimetype': '',
+        'encoding': '',
+        'language': '',
+        'cors': False,
+        'pretty_print': True,
+        'limit': 10,
+        'map': {
+            'url': '',
+            'attribution': '',
+        },
+        'ogc_schemas_location': '',
+    },
+    'logging': {
+        'level': 'ERROR',
+        'logfile': None,
+    },
+    'metadata': {
+        'identification': {
+            'title': '',
+            'description': '',
+            'keywords': [],
+            'keywords_type': 'theme',
+            'terms_of_service': '',
+            'url': '',
+        },
+        'license': {
+            'name': '',
+            'url': '',
+        },
+        'provider': {
+            'name': '',
+            'url': '',
+        },
+        'contact': {
+            'name': '',
+            'position': '',
+            'address': '',
+            'city': '',
+            'stateorprovince': '',
+            'postalcode': '',
+            'country': '',
+            'phone': '',
+            'fax': '',
+            'email': '',
+            'url': '',
+            'hours': '',
+            'instructions': '',
+            'role': 'pointOfContact',
+        },
+    },
+    'resources': {
+        'internal-rasters': {
+            'type': 'stac-collection',
+            'title': 'Internal DomiNode raster datasets',
+            'description': '',
+            'keywords': [],
+            'context': {},
+            'links': {},
+            'extents': {
+                'spatial': {},
+                'temporal': {},
+            },
+            'providers': [
+                {
+                    'type': 'stac',
+                    'default': True,
+                    'name': 'FileSystem',
+                    'data': '/data',
+                    'file_types': [
+                        '.tif',
+                    ]
+                }
+            ]
+        }
+    },
+}

@@ -3,4 +3,4 @@
 djangorestframework~=3.11
 django-filter~=2.3
 django-json-widget~=1.0
-
+pygeoapi==0.8.0
