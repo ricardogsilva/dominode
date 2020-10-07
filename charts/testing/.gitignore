@@ -1,5 +1,6 @@
 charts/dominode-*.tgz
 *-values.yaml
+ci/*/*-values.yaml
 
 # We didn't store Chart.lock in this chart because we want the dependency be updated manually.
 Chart.lock

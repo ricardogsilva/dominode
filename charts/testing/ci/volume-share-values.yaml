@@ -10,7 +10,7 @@ nfsShare:
 mediaShare:
   enabled: false
   server: 192.168.100.6
-  path: /exports/s3data/media
+  path: /exports/media
   capacity:
     # Change this according to your available resources
     storage: 20Gi
@@ -18,7 +18,7 @@ mediaShare:
 geoserverDataDirShare:
   enabled: false
   server: 192.168.100.6
-  path: /exports/s3data/geoserver-data-dir
+  path: /exports/geoserver-data-dir
   claimName: dominode-geoserver-geoserver-data-dir
   capacity:
     # Change this according to your available resources

@@ -12,7 +12,7 @@ nfsShare:
 mediaShare:
   enabled: false
   server: 192.168.100.6
-  path: /exports/s3data/media
+  path: /exports/media
   capacity:
     # Change this according to your available resources
     storage: 20Gi
@@ -20,7 +20,7 @@ mediaShare:
 geoserverDataDirShare:
   enabled: false
   server: 192.168.100.6
-  path: /exports/s3data/geoserver-data-dir
+  path: /exports/geoserver-data-dir
   claimName: dominode-geoserver-geoserver-data-dir
   capacity:
     # Change this according to your available resources
@@ -76,7 +76,7 @@ dominode:
       - name: nfs-share
         mountPath: /share/spatialstore
         # Note that subPath is the bucket name in Minio in this case
-        subPath: geoserver
+        # subPath: geoserver
 
     extraVolume: |
       - name: nfs-share
@@ -110,9 +110,7 @@ dominode:
           name: tls-volume
         {{- end }}
         - name: nfs-share
-          mountPath: /share/spatialstore
-          # Note that subPath is the bucket name in Minio in this case
-          subPath: geoserver
+          mountPath: /spcgeonode-geodatadir/data
 
     postgis:
       postgresqlDatabase: dominode_app,dominode
@@ -136,6 +134,7 @@ dominode:
     # Modify according to chosen host name
     geonodeSiteName: dominode.test
     geoserverURL: http://dominode.test/geoserver/
+    internalGeoserverURL: |
     # Credentials sections.
     # This section controls credentials of Dominode stack
     adminPassword:
@@ -159,7 +158,7 @@ dominode:
 # Section for bootstrapper
 bootstrapper:
   enabled: false
-  image: kartoza/dominode_bootstrapper:0.2.0
+  image: kartoza/dominode_bootstrapper:0.4.0
   config: |
     [db]
     admin_username: {{ .Values.dominode.geonode.global.geodatabaseUsername }}

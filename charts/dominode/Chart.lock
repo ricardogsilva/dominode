@@ -2,5 +2,5 @@ dependencies:
 - name: geonode
   repository: https://kartoza.github.io/charts
   version: 0.3.0
-digest: sha256:718ff6ad09033d6243956b978dbdc10b47f31b6d4756bd6b3b5a8ba11021915c
-generated: "2020-09-17T02:24:00.043757635+07:00"
+digest: sha256:35f59ca393dedf496c9a988218e020b518847d1126589d548cb34f0e07bd04e5
+generated: "2020-10-03T08:21:06.13756417+07:00"

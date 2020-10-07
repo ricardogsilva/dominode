@@ -2,6 +2,7 @@
 global:
   geonodeSiteName: dominode.test
   geoserverURL: http://dominode.test/geoserver/
+  internalGeoserverURL: |
   adminUser: admin
   adminPassword:
     value: admin

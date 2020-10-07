@@ -17,3 +17,4 @@ dependencies:
   - name: geonode
     version: 0.3.0
     repository: https://kartoza.github.io/charts
+    condition: geonode.enabled
