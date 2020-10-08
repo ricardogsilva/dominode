@@ -119,6 +119,8 @@ loaders = TEMPLATES[0]['OPTIONS'].get('loaders') or ['django.template.loaders.fi
 # loaders.insert(0, 'apptemplates.Loader')
 TEMPLATES[0]['OPTIONS']['loaders'] = loaders
 TEMPLATES[0].pop('APP_DIRS', None)
+TEMPLATES[0]['OPTIONS']['context_processors'].append(
+    'geonode_dominode.context_processors.user_is_geoserver_editor')
 
 LOGGING = {
     'version': 1,
