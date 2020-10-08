@@ -8,7 +8,10 @@ from django.dispatch import receiver
 from geonode.groups.models import GroupProfile
 from guardian.shortcuts import assign_perm
 
-from .constants import GEOSERVER_SYNC_PERM_CODE
+from .constants import (
+    GEOSERVER_SYNC_CATEGORY_NAME,
+    GEOSERVER_SYNC_PERM_CODE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,9 @@ def check_assign_geoserver_sync_permission(
     """Assign GeoServer sync perm when a suitable Group instance is created."""
     if action == 'post_add':
         existing_categories = [cat.name for cat in instance.categories.all()]
-        if instance.categories.filter(name='dominode-editor').exists():
+        has_editor_category = instance.categories.filter(
+            name=GEOSERVER_SYNC_CATEGORY_NAME).exists()
+        if has_editor_category:
             group = instance.group
             logger.debug(
                 f'Assigning geoserver sync permission to group {group}...')
