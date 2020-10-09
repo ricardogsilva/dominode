@@ -21,4 +21,9 @@ urlpatterns = [
         views.stac_catalog_path,
         name='pygeoapi-stac-catalog-path'
     ),
+    path(
+        'stac/search/',
+        views.stac_catalog_path,
+        name='pygeoapi-stac-search'
+    ),
 ]
