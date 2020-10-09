@@ -167,6 +167,10 @@ LOGGING = {
             "handlers": ["console"], "level": "DEBUG", },
         "geonode_logstash.logstash": {
             "handlers": ["console"], "level": "DEBUG", },
+        "pygeoapi": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
     },
 }
 
@@ -208,11 +212,11 @@ CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
 
 PYGEOAPI_CONFIG = {
     'server': {
-        'bind': {
-            'host': '',
-            'port': 5000,
-        },
-        'url': '',
+        # 'bind': {
+        #     'host': '0.0.0.0',
+        #     'port': 5000,
+        # },
+        'url': 'http://dominode.test/dominode-pygeoapi/',
         'mimetype': '',
         'encoding': '',
         'language': '',
@@ -226,14 +230,15 @@ PYGEOAPI_CONFIG = {
         'ogc_schemas_location': '',
     },
     'logging': {
-        'level': 'ERROR',
-        'logfile': None,
+        'level': LOGGING['loggers']['pygeoapi']['level'],
     },
     'metadata': {
         'identification': {
-            'title': '',
-            'description': '',
-            'keywords': [],
+            'title': 'DomiNode pygeoapi',
+            'description': 'DomiNode\'s pygeoapi integration endpoints' ,
+            'keywords': [
+                'stac',
+            ],
             'keywords_type': 'theme',
             'terms_of_service': '',
             'url': '',
@@ -243,11 +248,11 @@ PYGEOAPI_CONFIG = {
             'url': '',
         },
         'provider': {
-            'name': '',
-            'url': '',
+            'name': 'Government of the Commonwealth of Dominica',
+            'url': 'https://dominica.gov.dm',
         },
         'contact': {
-            'name': '',
+            'name': 'Charles Louis',
             'position': '',
             'address': '',
             'city': '',
@@ -272,20 +277,24 @@ PYGEOAPI_CONFIG = {
             'context': {},
             'links': {},
             'extents': {
-                'spatial': {},
-                'temporal': {},
+                'spatial': {
+                    'bbox': [-180, -90, 180, 90],
+                    'crs': 'http://www.opengis.net/def/crs/OGC/1.3/CRS84',
+                },
+                'temporal': {
+                    'begin': '2019-01-01T00:00:00Z',
+                    'end': '2029-01-01T00:00:00Z',
+                },
             },
-            'providers': [
-                {
-                    'type': 'stac',
-                    'default': True,
-                    'name': 'FileSystem',
-                    'data': '/data',
-                    'file_types': [
-                        '.tif',
-                    ]
-                }
-            ]
+            'provider': {
+                'type': 'stac',
+                'default': True,
+                'name': 'FileSystem',
+                'data': '/data',
+                'file_types': [
+                    '.tif',
+                ]
+            }
         }
     },
 }
