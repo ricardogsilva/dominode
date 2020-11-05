@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from geonode.geoserver.helpers import gs_slurp
 
 from geonode_dominode.celeryapp import app
+from dominode_topomaps import tasks as topomap_tasks
 
 logger = get_task_logger(__name__)
 
@@ -44,6 +45,10 @@ def task_sync_geoserver(workspace_name, username):
             error_message = e.message
         else:
             error_message = str(e)
+
+    # for any layers that represent published topomaps, update their
+    # featureinfo field
+    topomap_tasks.add_custom_featureinfo_template_topomap.apply_async()
 
     # Send email to user
     from_email = settings.DEFAULT_FROM_EMAIL

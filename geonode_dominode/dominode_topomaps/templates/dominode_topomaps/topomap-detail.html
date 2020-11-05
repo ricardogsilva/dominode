@@ -1,0 +1,23 @@
+{% extends "geonode_base.html" %}
+{% load i18n %}
+
+{% block body_outer %}
+    <div class="page-header">
+        <a href="{% url 'layer_detail' topomap.alternate %}" class="btn btn-primary pull-right">{% trans "Back to layer details" %}</a>
+        <h2 class="page-title">{{ topomap.name }}</h2>
+    </div>
+    {% if sheets %}
+        <p>{% trans "Published sheets:" %}</p>
+        <div class="list-group">
+            {% for sheet in sheets %}
+                <a class="list-group-item" href="{% url 'sheet-detail' topomap.version topomap.series sheet.index %}">{{ sheet.index }}</a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div>
+            {% blocktrans %}
+                There are no sheets published yet
+            {% endblocktrans %}
+        </div>
+    {% endif %}
+{% endblock %}

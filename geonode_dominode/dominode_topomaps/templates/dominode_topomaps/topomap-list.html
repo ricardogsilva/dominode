@@ -1,0 +1,45 @@
+{% extends "geonode_base.html" %}
+{% load i18n %}
+
+{% block body_outer %}
+    <div class="page-header">
+        <h2 class="page-title">{% trans "DomiNode published topomaps" %}</h2>
+    </div>
+    <div>
+    {% blocktrans %}
+    {% endblocktrans %}
+    </div>
+    {% if topomaps %}
+        <p>{% trans "Available topomap layers:" %}</p>
+        <div class="list-group">
+            {% for topomap in topomaps %}
+                <a href="{% url 'topomap-detail' topomap.version topomap.series %}" class="list-group-item">
+                    {{ topomap.title }}
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div>
+            {% blocktrans %}
+                There are no topomaps published yet
+            {% endblocktrans %}
+        </div>
+    {% endif %}
+    {% if is_paginated %}
+        <div class="pagination">
+            <span>
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+{% endblock %}

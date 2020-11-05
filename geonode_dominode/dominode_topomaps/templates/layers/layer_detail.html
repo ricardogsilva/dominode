@@ -248,6 +248,24 @@
       </article>
       {% endif %}
     </div>
+      {% if topomap %}
+          <div>
+              {% if sheets %}
+                  <h4>{% trans "Published topomap sheets" %}</h4>
+                  <div class="list-group">
+                      {% for sheet in sheets %}
+                          <a class="list-group-item" href="{% url 'sheet-detail' topomap.version topomap.series sheet.index %}">{{ sheet.index }}</a>
+                      {% endfor %}
+                  </div>
+              {% else %}
+                  <div>
+                      {% blocktrans %}
+                          There are no sheets published yet
+                      {% endblocktrans %}
+                  </div>
+              {% endif %}
+          </div>
+      {% endif %}
 
   </div>
   <div class="col-md-4">
@@ -529,7 +547,6 @@
     <li class="list-group-item">
       <a href="{% url "new_map" %}?layer={{resource.service_typename}}&view=True" class="btn btn-default btn-md btn-block">{% trans "View Layer" %}</a>
     </li>
-
     <li class="list-group-item">
       <button class="btn btn-default btn-md btn-block" data-toggle="modal" data-target="#download-metadata">{% trans "Download Metadata" %}</button>
     </li>

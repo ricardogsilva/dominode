@@ -73,8 +73,19 @@ WSGI_APPLICATION = "{}.wsgi.application".format(PROJECT_NAME)
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = os.getenv('LANGUAGE_CODE', "en")
 
-INSTALLED_APPS += (
+# This sequence of INSTALLED_APPS seems unusually hacky, but there is good
+# reason for it:
+# - we need our custom dominode apps to be rendered before the stock geonode
+#   apps in order to be able to override some geonode templates
+# - on the other hand we also need to have the standard GeoNode groups app
+#   loaded before we include our geonode_dominode app because we are replacing
+#   the standard admin for geonode groups with our own, which uses
+#   django-guardian.
+#
+INSTALLED_APPS = (
     'dominode_validation.apps.DominodeValidationConfig',
+    'dominode_topomaps.apps.DominodeTopomapsConfig',
+) + INSTALLED_APPS + (
     'geonode_dominode.apps.AppConfig',
     'rest_framework',
     # 'django_filters',
@@ -194,6 +205,9 @@ if DEBUG:
     LOGGING['loggers']['geonode_dominode'] = {
         "handlers": ["console"], "level": "DEBUG"
     }
+    LOGGING['loggers']['dominode_topomaps'] = {
+        "handlers": ["console"], "level": "DEBUG"
+    }
     LOGGING['handlers']['console']['level'] = 'DEBUG'
 
 
@@ -206,3 +220,11 @@ CELERY_TASK_QUEUES += (
 
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
+
+DOMINODE_PUBLISHED_TOPOMAPS = {
+    'index_pattern': 'lsd_published-topomap-series',
+    'sheet_path_pattern': (
+        '/topomaps/v{version}/series-{series}/dominica_topomap-{series}-'
+        '(?P<paper_size>\w+)-{sheet}_v{version}.pdf'
+    ),
+}

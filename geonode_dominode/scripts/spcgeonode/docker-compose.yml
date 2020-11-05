@@ -60,6 +60,7 @@ x-common-django:
   volumes:
     - static:/spcgeonode-static/
     - media:/spcgeonode-media/
+    - topomaps:/topomaps/
   restart: on-failure
 
 services:
@@ -220,6 +221,7 @@ services:
 volumes:
   static:
   media:
+  topomaps:
   database:
   geodatadir:
   certificates:

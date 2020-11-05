@@ -1,6 +1,6 @@
 from django.contrib import admin
-from guardian.admin import GuardedModelAdmin
 from geonode.groups.models import GroupProfile
+from guardian.admin import GuardedModelAdmin
 
 
 class GroupProfileAdmin(GuardedModelAdmin):

@@ -8,6 +8,12 @@ up:
 down:
 	@docker-compose down
 
+printenv:
+	@docker inspect dominode_django_1 | jq '.[0].Config.Env | join("\n")' -r
+
+runserver:
+	@docker-compose exec django manage.py runserver 0.0.0.0:6001
+
 logs:
 	@docker-compose logs -f $(or ${SERVICE},django)
 
