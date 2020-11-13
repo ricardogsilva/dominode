@@ -46,6 +46,11 @@ GEODATABASE_URL = 'postgis://{}:{}@{}:{}/{}'.format(GEONODE_GEODATABASE_USER, GE
 os.environ['DATABASE_URL'] = DATABASE_URL
 os.environ['GEODATABASE_URL'] = GEODATABASE_URL
 
+DOMAIN = os.getenv('HTTP_HOST', "localhost")
+
+PLAUSIBLE_PORT = os.getenv('PLAUSIBLE_PORT',"8000")
+PLAUSIBLE_URL = "http//{}:{}/js/plausible.js".format(DOMAIN,PLAUSIBLE_PORT)
+
 try:
     from geonode_dominode.local_settings import *
 #    from geonode.local_settings import *
@@ -132,6 +137,8 @@ TEMPLATES[0]['OPTIONS']['loaders'] = loaders
 TEMPLATES[0].pop('APP_DIRS', None)
 TEMPLATES[0]['OPTIONS']['context_processors'].append(
     'geonode_dominode.context_processors.user_is_geoserver_editor')
+TEMPLATES[0]['OPTIONS']['context_processors'].append(
+    'geonode_dominode.context_processors.plausible_envs')
 
 LOGGING = {
     'version': 1,

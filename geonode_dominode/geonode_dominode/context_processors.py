@@ -7,6 +7,7 @@ These add stuff to the context that is available for all templates
 import typing
 
 from django.http import HttpRequest
+from django.conf import settings
 
 from .constants import GEOSERVER_SYNC_CATEGORY_NAME
 
@@ -20,3 +21,10 @@ def user_is_geoserver_editor(request: HttpRequest) -> typing.Dict:
     return {
         'user_is_geoserver_editor': has_editor_category
     }
+
+def plausible_envs(request):
+  defaults = dict(
+      DOMAIN=settings.DOMAIN,
+      PLAUSIBLE_URL = settings.PLAUSIBLE_URL
+    )
+  return defaults
