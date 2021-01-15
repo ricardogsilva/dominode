@@ -27,8 +27,8 @@ export GEOSERVER_PUBLIC_LOCATION="${SITEURL}/geoserver/"
 
 # Run migrations
 echo 'Running initialize.py...'
-python -u scripts/spcgeonode/django/initialize.py
-
+DJANGO_SETTINGS_MODULE=geonode_dominode.settings_notopo python -u scripts/spcgeonode/django/initialize.py
+DJANGO_SETTINGS_MODULE=geonode_dominode.settings python -u scripts/spcgeonode/django/initialize.py
 echo "-----------------------------------------------------"
 echo "FINISHED DJANGO ENTRYPOINT --------------------------"
 echo "-----------------------------------------------------"

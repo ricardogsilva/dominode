@@ -74,8 +74,8 @@ services:
       timeout: 10s
       retries: 1
       start_period: 60s
-    entrypoint: ["/spcgeonode/scripts/spcgeonode/django/docker-entrypoint.sh"]
-    command: "uwsgi --chdir=/spcgeonode --module=geonode.wsgi --socket=:8000 --http=127.0.0.1:8001 --processes=5 --buffer-size=8192"
+    entrypoint: ["/opt/geonode_dominode/scripts/spcgeonode/django/docker-entrypoint.sh"]
+    command: "uwsgi --chdir=/opt/geonode_dominode --module=geonode.wsgi --socket=:8000 --http=127.0.0.1:8001 --processes=5 --buffer-size=8192"
 
   # Celery worker that executes celery tasks created by Django.
   celery:
@@ -217,6 +217,48 @@ services:
     volumes:
       - rabbitmq:/var/lib/rabbitmq
     restart: on-failure
+  
+  #Plausible stats
+  mail:
+    image: bytemark/smtp
+    restart: always
+
+  plausible_db:
+    image: postgres:12
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    restart: on-failure
+
+  plausible_events_db:
+    image: yandex/clickhouse-server:latest
+    volumes:
+      - event-data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    restart: on-failure
+
+  plausible:
+    image: plausible/analytics:latest
+    command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
+    depends_on:
+      - plausible_db
+      - plausible_events_db
+      - mail
+    ports:
+      - 8000:8000
+    environment:
+    # editable in .env
+    - ADMIN_USER_EMAIL=${ADMIN_USER_EMAIL}
+    - ADMIN_USER_NAME=${ADMIN_USER_NAME}
+    - ADMIN_USER_PWD=${ADMIN_USER_PWD}
+    - BASE_URL=${BASE_URL}
+    - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+    restart: on-failure
+
 
 volumes:
   static:
@@ -227,4 +269,9 @@ volumes:
   certificates:
   pgdumps:
   rabbitmq:
-
+  db-data:
+    driver: local
+  event-data:
+    driver: local
+  geoip:
+    driver: local

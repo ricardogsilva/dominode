@@ -2,6 +2,7 @@
 {% load i18n avatar_tags staticfiles %}
 {% block extra_head %}
 <link href="{{ STATIC_URL }}css/dominode_base.css" rel="stylesheet"/>
+<script async defer data-domain="{{ DOMAIN }}" src="{{ PLAUSIBLE_URL }}"></script>
 {% endblock extra_head %}
  {% block header %}
 <!-- Top -->
