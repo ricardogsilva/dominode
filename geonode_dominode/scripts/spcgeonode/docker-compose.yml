@@ -22,6 +22,7 @@ x-common-django:
     - TIME_ZONE=${TIME_ZONE}
     - ALLOWED_HOSTS=['nginx','127.0.0.1','localhost','$HTTPS_HOST','$HTTP_HOST']
     - SECRET_KEY=${SECRET_KEY}
+    - PLAUSIBLE_DOMAIN=${PLAUSIBLE_DOMAIN}
     # data
     ## -- comment to disable postgis ingestion of uploaded shapefiles
     - DEFAULT_BACKEND_UPLOADER=geonode.importer
@@ -242,7 +243,7 @@ services:
     restart: on-failure
 
   plausible:
-    image: plausible/analytics:latest
+    image: plausible/analytics:v1.1
     command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
     depends_on:
       - plausible_db

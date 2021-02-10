@@ -48,8 +48,8 @@ os.environ['GEODATABASE_URL'] = GEODATABASE_URL
 
 DOMAIN = os.getenv('HTTP_HOST', "localhost")
 
-PLAUSIBLE_PORT = os.getenv('PLAUSIBLE_PORT',"8000")
-PLAUSIBLE_URL = "http//{}:{}/js/plausible.js".format(DOMAIN,PLAUSIBLE_PORT)
+PLAUSIBLE_DOMAIN = os.getenv('PLAUSIBLE_DOMAIN',"http://localhost")
+PLAUSIBLE_URL = "{}/js/plausible.js".format(PLAUSIBLE_DOMAIN)
 
 try:
     from geonode_dominode.local_settings import *
