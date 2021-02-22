@@ -39,4 +39,12 @@ urlpatterns = [
     url(r'^layers/upload$', RedirectView.as_view(url='/')),
     url(r'^layers/(?P<layername>[^/]*)/replace$',
         RedirectView.as_view(url='/')),
+    url(r'^cors/', include('cors.urls')),
+    url(r'^/?$',
+        homepage,
+        name='home'),
+    url(r'^groups/group/(?P<slug>[-\w]+)/$',
+        GroupDetailView.as_view(), name='group_detail'),
+    url(r'^groups/sync_geoserver/',
+        sync_geoserver, name='sync_geoserver'),
  ] + urlpatterns

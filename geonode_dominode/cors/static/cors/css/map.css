@@ -1,0 +1,91 @@
+body {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    overflow-x: hidden;
+}
+
+body:not(.home) .navbar {
+    z-index: 1000;
+}
+
+.top_of_page {
+    display: none;
+}
+
+#gocd, .navbar, footer {
+    flex: 0 1 auto;
+}
+
+#wrap {
+    flex: 1 1 auto;
+    padding-bottom: 0;
+    position: relative;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+#side-panel {
+    background: white;
+    height: 100%;
+    overflow-y: scroll;
+    position: absolute;
+    display: none;
+    right: 0;
+    top: 0;
+    width: 400px;
+    z-index: 999;
+    /* shadow */
+    -webkit-box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.2);
+    box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.2);
+}
+
+#side-panel .section {
+    padding: 20px 10px;
+}
+
+#side-panel .section .title {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+#side-panel #download-section {
+    border-top: 1px solid #ddd;
+}
+
+#side-panel label {
+    font-weight: 300;
+}
+
+#side-panel::-webkit-scrollbar {
+    display: none;
+}
+
+#side-panel table {
+    width: 100%;
+}
+
+#side-panel td {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+}
+
+#side-panel td:first-child {
+    font-weight: 600;
+}
+
+#side-panel table {
+    width: 100%;
+}
+
+#side-panel form button {
+    width: 100%;
+}
+
+.g-recaptcha {
+    display: inline-block;
+}

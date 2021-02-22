@@ -1,3 +1,4 @@
+ftputil==4.0.0
 -e git+https://github.com/GeoNode/geonode.git@3.x#egg=GeoNode
 
 djangorestframework~=3.11

@@ -95,7 +95,7 @@ INSTALLED_APPS = (
     'rest_framework',
     # 'django_filters',
     'django_json_widget',
-)
+) + (PROJECT_NAME, 'cors')
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': (
@@ -114,8 +114,7 @@ REST_FRAMEWORK = {
     ]
 }
 
-# if PROJECT_NAME not in INSTALLED_APPS:
-#     INSTALLED_APPS += (PROJECT_NAME,)
+
 
 # Location of url mappings
 ROOT_URLCONF = os.getenv('ROOT_URLCONF', '{}.urls'.format(PROJECT_NAME))
