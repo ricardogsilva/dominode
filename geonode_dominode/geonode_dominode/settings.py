@@ -95,7 +95,7 @@ INSTALLED_APPS = (
     'rest_framework',
     # 'django_filters',
     'django_json_widget',
-) + (PROJECT_NAME, 'cors')
+) + ('cors',)
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': (
