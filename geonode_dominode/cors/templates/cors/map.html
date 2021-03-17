@@ -8,8 +8,8 @@
     <link href="{{ STATIC_URL }}cors/css/map.css" rel="stylesheet"/>
     <script>
         const observationDownloadURL = '{% url 'cors-observation-download' 0%}'
-        let captchaReady = false;
-    </script>
+        // let captchaReady = false;
+    </script> 
 {% endblock extra_head %}
 {% block middle %}
     <div id="map"></div>
@@ -31,32 +31,27 @@
                         <label>To</label>
                         <input type="date" class="form-control" name="to" required>
                     </div>
-                    <br>
-                    <div style="text-align: center">
-                        <div class="g-recaptcha"
-                             data-sitekey="6Ld_Gs8ZAAAAAO19yBNuQHx-ghn35caCvBxwfh44"
-                             data-callback="captchaCallback"
-                             data-expired-callback="captchaExpired"></div>
-                    </div>
-                    <br>
-                    <button id="download-observation-button" type="submit" class="btn btn-primary" disabled>Download</button>
+                    <button id="download-observation-button" type="submit" class="btn btn-primary">Get Links</button>
+
+                      {% if latest_question_list %}
+                        <ul>
+                        {% for question in latest_question_list %}
+                            <li>{{ question }}</a></li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No polls are available.</p>
+                    {% endif %}
                 </form>
+
+
             </div>
         {% endif %}
     </div>
 {% endblock %}
 {% block extra_script %}
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <!-- <script src="https://www.google.com/recaptcha/api.js" async defer></script> -->
     <script type="text/javascript" src="{{ STATIC_URL }}cors/js/shared.js"></script>
     <script data-main="{{ STATIC_URL }}cors/js/map/config.js" src="{{ STATIC_URL }}cors/js/libs/require.js/2.3.6/require.min.js"></script>
-    <script type="text/javascript">
-        var captchaCallback = function () {
-            captchaReady = true;
-            $('#download-observation-button').attr("disabled", false);
-        };
-        var captchaExpired = function () {
-            captchaReady = false;
-            $('#download-observation-button').attr("disabled", true);
-        };
-    </script>
+
 {% endblock extra_script %}

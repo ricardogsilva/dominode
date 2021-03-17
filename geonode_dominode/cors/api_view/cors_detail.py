@@ -7,7 +7,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from cors.models.station import CORSStation
-
+from django.shortcuts import render
+from django.conf import settings
 
 class CorsObservationDownloadDetail(APIView):
     """ Check download detail  """
@@ -24,8 +25,7 @@ class CorsObservationDownloadDetail(APIView):
             if date_from > date_to:
                 return HttpResponseBadRequest('From is larger than to')
             return JsonResponse({
-                'filesize': station.indexes_size(date_from, date_to),
-                'filename': station.indexes_in_zip_filename(date_from, date_to)
+                'filename': station.indexes_in_txt_filename(date_from, date_to)
             })
         except KeyError as e:
             return HttpResponseBadRequest('{} is required'.format(e))
@@ -45,10 +45,12 @@ class CorsObservationDownload(APIView):
             date_to = datetime.datetime.strptime(data['to'], '%Y-%m-%d')
             if date_from > date_to:
                 return HttpResponseBadRequest('From is larger than to')
-            path = station.indexes_in_zip(date_from, date_to)
-            with open(path, 'rb') as zip_file:
-                response = HttpResponse(zip_file.read(), content_type="application/zip")
-                response['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(path)
-                return response
+            path = station.indexes_in_txt(date_from, date_to)
+            indexes = station.get_indexes(date_from, date_to)
+            context = {
+                   'indexes': indexes,
+                   'SITE_URL': settings.SITEURL
+              }
+            return render(request, 'cors/table.html', context)
         except KeyError as e:
             return HttpResponseBadRequest('{} is required'.format(e))

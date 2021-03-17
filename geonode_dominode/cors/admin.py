@@ -12,7 +12,7 @@ download_from_ftp.short_description = "Download file from ftp to local"
 
 
 class IndexFileAdmin(admin.ModelAdmin):
-    list_display = ('file_name', 'ftp_file_path', 'ftp_zip_path', 'file_size', 'local_path')
+    list_display = ('station','date','file_name','location')
     actions = [download_from_ftp]
 
 

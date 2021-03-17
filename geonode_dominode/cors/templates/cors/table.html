@@ -1,0 +1,50 @@
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+.button {
+	  background-color: #616161;
+          border: none;
+	  color: white;
+	  padding: 10px 20px;					 
+	  text-align: center;
+	  text-decoration: none;
+	  display: inline-block;
+	  font-size: 16px;
+	  margin: 4px 2px;
+	  cursor: pointer;
+}
+</style>
+<h2>CORS: RNX GPS FILES</h2>
+{% if indexes %}
+	<table border="1">
+	    <th>DATE</th>
+	    <th>FILE</th>
+	    {% for index in indexes %}
+	    <tr>
+	    <td>{{ index.date }}</td>
+	    <td><a href="{{ index.location }}" target="_blank">{{ index.location }}</a></td>
+	    </tr>
+	    {% endfor %}
+	</table>
+{% else %}
+       <p>No files are available.</p>
+{% endif %}
+<div>
+<button type="button" class="button">
+	    <a href="{{ SITE_URL }}cors/map" class="button">Go Back!</a>
+</button>
+</div>
