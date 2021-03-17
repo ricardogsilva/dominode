@@ -1,5 +1,5 @@
 ftputil==4.0.0
--e git+https://github.com/GeoNode/geonode.git@3.x#egg=GeoNode
+-e git+https://github.com/GeoNode/geonode.git@3.2.x#egg=GeoNode
 
 djangorestframework~=3.11
 django-filter~=2.3
