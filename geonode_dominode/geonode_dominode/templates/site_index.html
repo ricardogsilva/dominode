@@ -1,5 +1,6 @@
 {% extends 'index.html' %}
 {% load i18n %}
+
 {% comment %}
 This is where you can override the hero area block. You can simply modify the content below or replace it wholesale to meet your own needs.
 {% endcomment %}
@@ -12,3 +13,48 @@ This is where you can override the hero area block. You can simply modify the co
     </div>
   </div>
   {% endblock %}
+
+  {% block datasets %}
+  <script src="https://kit.fontawesome.com/001e0b6f13.js" crossorigin="anonymous"></script>
+
+<section id="sd">
+        <div class="row">
+          <div class="container text-center">
+          	<h2>Additional Datasets</h2>
+            <div class="row home-facets">
+            	
+              <div class="col-md-6">
+                <p><a href="{% url "cors-map" %}"><i class="fas fa-satellite-dish fa-4x"></i></a></p>
+                <h2><a href="{% url "cors-map" %}">CORS Stations</a></h2>
+                <p>CORS stations provide Global Navigation Satellite System (GNSS) data, supporting three dimensional positioning and geophysical applications throughout Dominica.</p>
+                <p class="text-center"><a class="btn btn-default" href="{% url "cors-map" %}"role="button">Explore CORS &raquo;</a></p>
+              </div>
+
+              <div class="col-md-6">
+                <p><a href="https://google.com"><i class="far fa-compass fa-4x"></i></a></p>
+                <h2><a href="https://google.com">LiDAR</a></h2>
+                <p>Topographic and bathymetric LiDAR data from Dominica.</p>
+                <p class="text-center"><a class="btn btn-default" href="https://google.com" role="button">Explore LiDAR &raquo;</a></p>
+              </div>
+ 			</div>
+            <div class="row home-facets">
+              <div class="col-md-6">
+                <p><a href="{% url "topomap-list" %}"><i class="fas fa-map-marked-alt fa-4x"></i></a></p>
+                <h2><a href="{% url "topomap-list" %}">TopoMaps</a></h2>
+                <p>Dominica's Topomaps are maps characterized by large-scale detail and quantitative representation of relief.</p>
+                <p class="text-center"><a class="btn btn-default" href="{% url "topomap-list" %}" role="button">Explore TopoMaps &raquo;</a></p>
+              </div>
+
+  			<div class="col-md-6">
+                <p><a href="https://google.com"><i class="fas fa-satellite fa-4x"></i></a></p>
+                <h2><a href="https://google.com"> COGs</a></h2>
+                <p>Cloud optimized Geotiffs from satellite imaging of Dominica.</p>
+                <p class="text-center"><a class="btn btn-default" href="https://google.com" role="button">Explore COGs &raquo;</a></p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+     
+  {% endblock  %}
