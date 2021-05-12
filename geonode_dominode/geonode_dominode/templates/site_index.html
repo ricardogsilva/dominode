@@ -14,7 +14,8 @@ This is where you can override the hero area block. You can simply modify the co
   </div>
   {% endblock %}
 
-  {% block datasets %}
+  {% block showcase %}
+  {{ block.super }}
   <script src="https://kit.fontawesome.com/001e0b6f13.js" crossorigin="anonymous"></script>
 
 <section id="sd">
@@ -31,8 +32,8 @@ This is where you can override the hero area block. You can simply modify the co
               </div>
 
               <div class="col-md-6">
-                <p><a href="https://google.com"><i class="far fa-compass fa-4x"></i></a></p>
-                <h2><a href="https://google.com">LiDAR</a></h2>
+                <p><a href="#"><i class="far fa-compass fa-4x"></i></a></p>
+                <h2><a href="#">LiDAR</a></h2>
                 <p>Topographic and bathymetric LiDAR data from Dominica.</p>
                 <p class="text-center"><a class="btn btn-default" href="https://google.com" role="button">Explore LiDAR &raquo;</a></p>
               </div>
@@ -46,10 +47,10 @@ This is where you can override the hero area block. You can simply modify the co
               </div>
 
   			<div class="col-md-6">
-                <p><a href="https://google.com"><i class="fas fa-satellite fa-4x"></i></a></p>
-                <h2><a href="https://google.com"> COGs</a></h2>
+                <p><a href="#"><i class="fas fa-satellite fa-4x"></i></a></p>
+                <h2><a href="#"> COGs</a></h2>
                 <p>Cloud optimized Geotiffs from satellite imaging of Dominica.</p>
-                <p class="text-center"><a class="btn btn-default" href="https://google.com" role="button">Explore COGs &raquo;</a></p>
+                <p class="text-center"><a class="btn btn-default" href="#" role="button">Explore COGs &raquo;</a></p>
               </div>
 
             </div>
